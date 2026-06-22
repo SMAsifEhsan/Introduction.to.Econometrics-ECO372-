@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Least squares & inference — interactive guide (Test score vs STR)</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#eef4fc; --card:#ffffff; --ink:#15151f; --muted:#56566b; --faint:#9494a6;
+    --border:rgba(24,24,60,.10); --border2:rgba(24,24,60,.18); --track:#e8e8f3;
+    --grid:rgba(30,30,70,.07); --axis:rgba(30,30,70,.28);
+    --blue:#2563eb; --indigo:#7c3aed; --coral:#f5573b; --amber:#e08a0b; --teal:#0fb488; --teal2:#22c55e;
+    --sq-fill:rgba(245,87,59,.13); --sq-stroke:rgba(245,87,59,.42);
+    --teal-fill:rgba(15,180,136,.13); --teal-stroke:rgba(15,180,136,.40);
+    --amber-fill:rgba(224,138,11,.13); --amber-stroke:rgba(224,138,11,.42);
+    --bg-grad:linear-gradient(165deg,#f3f7ff 0%,#eef4fc 55%,#e7f0fb 100%);
+    --shadow:0 1px 2px rgba(24,24,60,.05),0 10px 30px rgba(24,24,60,.07);
+    --btn-grad:linear-gradient(135deg,#7c3aed,#2563eb);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg-grad) fixed;background-color:var(--bg);color:var(--ink);min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.6}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 56px}
+  h1{font-size:23px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;
+    background:linear-gradient(100deg,var(--indigo),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  @supports not (-webkit-background-clip:text){h1{color:var(--ink);background:none}}
+  .sub{font-size:15px;color:var(--muted);margin:0 0 18px}
+  .lead{font-size:14.5px;color:var(--muted);max-width:820px;margin:0 0 18px}
+  .lead b{color:var(--ink);font-weight:600}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin:0 0 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tab{appearance:none;border:none;background:transparent;cursor:pointer;font:inherit;font-size:14.5px;font-weight:600;
+    color:var(--muted);padding:10px 16px;border-radius:10px 10px 0 0;position:relative;transition:color .15s,background .15s}
+  .tab:hover{color:var(--ink);background:rgba(124,58,237,.06)}
+  .tab.active{color:var(--indigo)}
+  .tab.active::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;
+    background:linear-gradient(90deg,var(--indigo),var(--blue))}
+
+  /* pages */
+  .page{display:none}
+  .page.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* scenario row + select */
+  .ctlrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+  .ctlrow .lbl{font-size:13px;color:var(--muted);font-weight:600}
+  select.sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:14px;color:var(--ink);
+    background-color:var(--card);border:1px solid var(--border2);border-radius:10px;padding:9px 36px 9px 13px;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 19px) 52%,calc(100% - 14px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+    box-shadow:var(--shadow)}
+  select.sel:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px 16px;margin:0 0 10px}
+  .chip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  .sw-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .sw-line{width:20px;height:0;display:inline-block}
+  .sw-sq{width:13px;height:13px;display:inline-block;border-radius:2px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+  .plotcard{padding:14px 12px 6px;margin-bottom:14px;position:relative;overflow:hidden}
+  .plotcard::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
+    background:linear-gradient(90deg,var(--indigo),var(--blue) 55%,var(--teal))}
+  svg{display:block;width:100%;height:auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+  .pad{padding:16px 18px}
+  .eq{font-size:18px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin-bottom:8px}
+  .eq b{font-weight:600;color:var(--indigo)}
+  .hint{font-size:12.5px;color:var(--faint);margin:0 0 12px;line-height:1.5}
+  .row{display:flex;align-items:center;gap:12px;margin:14px 0}
+  .row label{font-size:13px;color:var(--muted);width:118px;flex:none}
+  .row input[type=range]{flex:1;accent-color:var(--indigo)}
+  .val{font-size:14px;font-weight:600;min-width:54px;text-align:right;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .divider{border-top:1px solid var(--border);margin:14px 0 4px}
+  .tog{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;margin:9px 0}
+  .tog input{accent-color:var(--coral);width:15px;height:15px}
+  .tog.view input{accent-color:var(--indigo)}
+  .tog.tealbox input{accent-color:var(--teal)}
+  .tog.amberbox input{accent-color:var(--amber)}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .metric{background:var(--bg);border-radius:12px;padding:11px 13px;border:1px solid var(--border)}
+  .metric.rss{background:var(--sq-fill);border-color:var(--sq-stroke)}
+  .metric.r2{background:var(--teal-fill);border-color:var(--teal-stroke)}
+  .mlab{font-size:12.5px;color:var(--muted)}
+  .mval{font-size:25px;font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.25}
+  .metric.rss .mval{color:var(--coral)}
+  .metric.r2 .mval{color:var(--teal)}
+  .mnote{font-size:12px;color:var(--faint);margin-top:1px}
+  .barwrap{margin-top:16px}
+  .barhead{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
+  .barhead .lab{color:var(--muted)}
+  .barhead .pct{font-weight:700;color:var(--teal)}
+  .track{height:10px;border-radius:6px;background:var(--track);overflow:hidden}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal2));border-radius:6px;transition:width .12s linear}
+  .cap{font-size:12px;color:var(--faint);margin-top:7px}
+  .badge{display:none;align-items:center;gap:5px;color:var(--teal);font-weight:600;margin-left:6px;
+    background:var(--teal-fill);border:1px solid var(--teal-stroke);padding:1px 8px;border-radius:999px;font-size:12px}
+  .buttons{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  button{font:inherit;font-size:14px;padding:9px 15px;border-radius:11px;cursor:pointer;
+    border:1px solid var(--border2);background:transparent;color:var(--ink);
+    transition:transform .06s ease,box-shadow .15s ease,background .15s ease,border-color .15s ease,color .15s ease}
+  button:hover{border-color:var(--indigo);color:var(--indigo)}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--btn-grad);border:none;color:#fff;font-weight:600;box-shadow:0 4px 14px -2px rgba(99,72,210,.45)}
+  button.primary:hover{color:#fff;transform:translateY(-1px);box-shadow:0 7px 20px -3px rgba(99,72,210,.55)}
+
+  /* R-squared decomposition bar */
+  .decomp .declabel{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .decomp .bar{display:flex;height:32px;border-radius:9px;overflow:hidden;border:1px solid var(--border)}
+  .decomp .seg{flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;
+    white-space:nowrap;overflow:hidden;transition:width .2s ease}
+  .decomp .ess{background:linear-gradient(90deg,var(--teal),var(--teal2))}
+  .decomp .rss{background:var(--coral)}
+  .decomp .keys{display:flex;justify-content:space-between;font-size:12px;margin-top:7px}
+
+  /* hypothesis decision */
+  .decision{display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:5px 14px;border-radius:999px;font-size:15px}
+  .decision.reject{color:var(--teal);background:var(--teal-fill);border:1px solid var(--teal-stroke)}
+  .decision.fail{color:var(--amber);background:var(--amber-fill);border:1px solid var(--amber-stroke)}
+
+  .note{font-size:12.5px;color:var(--faint);margin-top:14px;line-height:1.55}
+  footer{margin-top:26px;font-size:12.5px;color:var(--muted);line-height:1.55}
+  footer code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--card);padding:1px 5px;border-radius:5px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Least squares &amp; statistical inference</h1>
+    <p class="sub">An interactive guide for ECO372 — test scores vs. the student–teacher ratio (STR), simulated school districts</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-page="ols" role="tab">1 · OLS estimation</button>
+    <button class="tab" data-page="r2" role="tab">2 · R² goodness of fit</button>
+    <button class="tab" data-page="ht" role="tab">3 · Hypothesis testing</button>
+  </nav>
+
+  <!-- ===================== PAGE 1 · OLS ===================== -->
+  <section class="page active" id="page-ols">
+    <p class="lead">OLS picks the intercept β₀ and slope β₁ that make the residual sum of squares
+      <b>RSS = Σ(TSᵢ − T̂Sᵢ)²</b> as small as possible. Choose a scenario, drag the line by hand, watch the RSS,
+      then press <b>“Snap to OLS best fit”</b>.</p>
+
+    <div class="ctlrow">
+      <span class="lbl">Scenario</span>
+      <select class="sel" id="ols-scn">
+        <option value="0">Strong negative relationship</option>
+        <option value="1">Weak, noisy relationship</option>
+        <option value="2">Almost no relationship</option>
+        <option value="3">Steep relationship</option>
+      </select>
+    </div>
+
+    <section class="legend">
+      <span class="chip"><span class="sw-dot" style="background:var(--blue)"></span>District (STRᵢ, TSᵢ)</span>
+      <span class="chip"><span class="sw-line" style="border-top:3px solid var(--indigo)"></span>Fitted line T̂S = β₀ + β₁·STR</span>
+      <span class="chip"><span class="sw-dot" style="border:2.5px solid var(--indigo);background:transparent"></span>Intercept β₀ (at STR = 0)</span>
+      <span class="chip"><span class="sw-sq" style="background:var(--sq-fill);border:1px solid var(--sq-stroke)"></span>Squared residual</span>
+      <span class="chip"><span class="sw-sq" style="background:var(--amber);transform:rotate(45deg)"></span>Mean (S̄TR, T̄S)</span>
+    </section>
+
+    <section class="card plotcard">
+      <svg id="ols-plot" viewBox="0 0 820 480" role="img" aria-label="Scatter of test score against student-teacher ratio with an adjustable regression line, residuals and squared residuals.">
+        <defs><clipPath id="ols-clip"><rect x="72" y="24" width="714" height="398"/></clipPath></defs>
+        <g id="ols-static"></g>
+        <g id="ols-dyn" clip-path="url(#ols-clip)"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="eq">T̂S = <b id="ols-eqB0">—</b> <span id="ols-eqSign">−</span> <b id="ols-eqB1">—</b> × STR</div>
+        <div class="hint" id="ols-hint">&nbsp;</div>
+        <div class="row"><label>β₀ &nbsp;intercept</label><input type="range" id="ols-b0" min="610" max="770" step="0.5"><span class="val" id="ols-vb0">—</span></div>
+        <div class="row"><label>β₁ &nbsp;slope</label><input type="range" id="ols-b1" min="-6" max="1" step="0.05"><span class="val" id="ols-vb1">—</span></div>
+        <div class="divider"></div>
+        <label class="tog view"><input type="checkbox" id="ols-ext" checked>Show STR = 0 on the axis (so the intercept is visible)</label>
+        <label class="tog"><input type="checkbox" id="ols-res" checked>Show residuals (TSᵢ − T̂Sᵢ)</label>
+        <label class="tog"><input type="checkbox" id="ols-sq">Show squared residuals (the area being minimized)</label>
+        <label class="tog amberbox"><input type="checkbox" id="ols-mean">Show the mean point — the OLS line always passes through it</label>
+      </div>
+
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric rss"><div class="mlab">Residual sum of squares</div><div class="mval" id="ols-rss">—</div><div class="mnote" id="ols-rssnote">&nbsp;</div></div>
+          <div class="metric r2"><div class="mlab">R² = 1 − RSS / TSS</div><div class="mval" id="ols-r2">—</div><div class="mnote">variation in TS explained</div></div>
+        </div>
+        <div class="barwrap">
+          <div class="barhead"><span class="lab">Closeness to the best-fit line <span class="badge" id="ols-badge">✓ best fit reached</span></span><span class="pct" id="ols-pct">0%</span></div>
+          <div class="track"><div class="fill" id="ols-fill"></div></div>
+          <div class="cap" id="ols-cap">&nbsp;</div>
+        </div>
+        <div class="buttons"><button class="primary" id="ols-snap">Snap to OLS best fit</button><button id="ols-reset">Reset to flat line</button></div>
+      </div>
+    </section>
+    <p class="note" id="ols-soln">—</p>
+  </section>
+
+  <!-- ===================== PAGE 2 · R² ===================== -->
+  <section class="page" id="page-r2">
+    <p class="lead">R² says how much of the variation in test scores the regression accounts for. The total variation splits
+      <b>exactly</b> into an explained part and a residual part: <b>TSS = ESS + RSS</b>, and <b>R² = ESS / TSS</b>.
+      Change the scenario and watch the explained (green) share of the bar grow or shrink.</p>
+
+    <div class="ctlrow">
+      <span class="lbl">Scenario</span>
+      <select class="sel" id="r2-scn">
+        <option value="0">Strong fit — high R²</option>
+        <option value="1" selected>Moderate fit</option>
+        <option value="2">Weak fit — low R²</option>
+        <option value="3">No linear relationship — R² ≈ 0</option>
+      </select>
+    </div>
+
+    <section class="legend">
+      <span class="chip"><span class="sw-dot" style="background:var(--blue)"></span>District</span>
+      <span class="chip"><span class="sw-line" style="border-top:3px solid var(--indigo)"></span>OLS line (fitted)</span>
+      <span class="chip"><span class="sw-line" style="border-top:2px dashed var(--amber)"></span>mean T̄S</span>
+      <span class="chip"><span class="sw-line" style="border-top:3px solid var(--amber)"></span>total deviation (TSS)</span>
+      <span class="chip"><span class="sw-line" style="border-top:3px solid var(--teal)"></span>explained (ESS)</span>
+      <span class="chip"><span class="sw-line" style="border-top:3px solid var(--coral)"></span>residual (RSS)</span>
+    </section>
+
+    <section class="card plotcard">
+      <svg id="r2-plot" viewBox="0 0 820 480" role="img" aria-label="Scatter with the OLS line and the mean line, showing total, explained and residual deviations.">
+        <defs><clipPath id="r2-clip"><rect x="72" y="24" width="714" height="398"/></clipPath></defs>
+        <g id="r2-static"></g>
+        <g id="r2-dyn" clip-path="url(#r2-clip)"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <label class="tog amberbox"><input type="checkbox" id="r2-tot" checked>Total deviations from the mean (TSS)</label>
+        <label class="tog tealbox"><input type="checkbox" id="r2-exp">Explained part (ESS = fitted − mean)</label>
+        <label class="tog"><input type="checkbox" id="r2-res">Residuals from the line (RSS)</label>
+        <div class="divider"></div>
+        <div class="decomp">
+          <div class="declabel">Variation decomposition — TSS = ESS + RSS</div>
+          <div class="bar"><div class="seg ess" id="r2-ess-seg"></div><div class="seg rss" id="r2-rss-seg"></div></div>
+          <div class="keys"><span style="color:var(--teal);font-weight:600">explained (ESS)</span><span style="color:var(--coral);font-weight:600">residual (RSS)</span></div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric r2"><div class="mlab">R² = ESS / TSS</div><div class="mval" id="r2-r2">—</div><div class="mnote" id="r2-r2note">share of variation explained</div></div>
+          <div class="metric"><div class="mlab">Correlation r</div><div class="mval" id="r2-corr">—</div><div class="mnote">r² = R² in simple regression</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab">Total SS (TSS)</div><div class="mval" style="font-size:19px" id="r2-tss">—</div></div>
+          <div class="metric"><div class="mlab">Explained (ESS)</div><div class="mval" style="font-size:19px;color:var(--teal)" id="r2-essv">—</div></div>
+          <div class="metric rss"><div class="mlab">Residual (RSS)</div><div class="mval" style="font-size:19px" id="r2-rssv">—</div></div>
+          <div class="metric"><div class="mlab">Slope β̂₁</div><div class="mval" style="font-size:19px" id="r2-b1">—</div></div>
+        </div>
+      </div>
+    </section>
+    <p class="note">Same line, same data — only the spread changes. Tighter clouds leave a smaller residual (orange) share, so R² rises toward 1; a flat cloud explains nothing, so R² ≈ 0.</p>
+  </section>
+
+  <!-- ===================== PAGE 3 · HYPOTHESIS TESTING ===================== -->
+  <section class="page" id="page-ht">
+    <p class="lead">Is STR really related to test scores, or could the estimated slope just be sampling noise? We test
+      <b>H₀: β₁ = 0</b> against <b>H₁: β₁ ≠ 0</b>. The t-statistic counts how many standard errors β̂₁ sits from 0;
+      if it lands in a shaded tail we reject H₀. Shrink the sample or draw a new one and watch the decision flip.</p>
+
+    <div class="ctlrow">
+      <span class="lbl">Significance level α</span>
+      <select class="sel" id="ht-alpha">
+        <option value="0.10">10%</option>
+        <option value="0.05" selected>5%</option>
+        <option value="0.01">1%</option>
+      </select>
+      <span class="lbl" style="margin-left:6px">Sample size n</span>
+      <input type="range" id="ht-n" min="8" max="200" step="1" style="flex:1;min-width:150px;accent-color:var(--indigo)">
+      <span class="val" id="ht-nv">—</span>
+      <button id="ht-new">Draw new sample</button>
+    </div>
+
+    <section class="card plotcard">
+      <svg id="ht-scatter" viewBox="0 0 820 300" role="img" aria-label="The current sample of districts with its fitted OLS line.">
+        <g id="ht-scatter-g"></g>
+      </svg>
+    </section>
+
+    <section class="card plotcard">
+      <svg id="ht-curve" viewBox="0 0 820 300" role="img" aria-label="Standard normal sampling distribution of the t-statistic with the rejection region and the observed t marked.">
+        <g id="ht-curve-g"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric"><div class="mlab">Estimated slope β̂₁</div><div class="mval" style="font-size:21px" id="ht-b1">—</div><div class="mnote" id="ht-se">&nbsp;</div></div>
+          <div class="metric"><div class="mlab">t = β̂₁ / SE</div><div class="mval" id="ht-t">—</div><div class="mnote" id="ht-df">&nbsp;</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab">p-value (two-sided)</div><div class="mval" style="font-size:21px" id="ht-p">—</div><div class="mnote" id="ht-pnote">&nbsp;</div></div>
+          <div class="metric"><div class="mlab">Critical value ±t*</div><div class="mval" style="font-size:21px" id="ht-zc">—</div><div class="mnote" id="ht-zcnote">t-distribution</div></div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:9px">Decision at α = <b id="ht-alpha-lbl">5%</b></div>
+        <div id="ht-decision" class="decision fail">—</div>
+        <div id="ht-decmsg" style="font-size:13px;color:var(--muted);margin-top:10px">&nbsp;</div>
+        <div class="divider"></div>
+        <div id="ht-ci" style="font-size:13.5px;color:var(--muted)">—</div>
+        <div id="ht-interp" style="font-size:13px;color:var(--faint);margin-top:7px">&nbsp;</div>
+      </div>
+    </section>
+    <p class="note">As n grows the standard error shrinks, so |t| grows and even a fixed slope eventually becomes significant — a reminder that “statistically significant” is not the same as “large.”</p>
+  </section>
+
+  <footer>
+    <p style="margin:0 0 6px">Data: simulated districts with STR ~ Normal(19.6, 2.3) and Test score = β₀ + β₁·STR + noise, so the data-generating process is known and every quantity can be seen exactly. Each scenario uses a fixed seed, so the picture is identical on every load.</p>
+    <p style="margin:0">Tests use homoskedastic standard errors and the exact t-distribution with n − 2 degrees of freedom, which approaches the standard normal as n grows. Single self-contained file — runs offline.</p>
+  </footer>
+</main>
+
+<script>
+(function(){
+  /* ---------- math utilities ---------- */
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function normalGen(rng){var spare=null;return function(){if(spare!==null){var s=spare;spare=null;return s;}var u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();var R=Math.sqrt(-2*Math.log(u));spare=R*Math.sin(2*Math.PI*v);return R*Math.cos(2*Math.PI*v);};}
+  function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+  function r1(x){return Math.round(x*10)/10;}
+  function fmt(x){return Math.round(x).toLocaleString();}
+  function erf(x){var s=x<0?-1:1;x=Math.abs(x);var t=1/(1+0.3275911*x);
+    var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+  function normCdf(z){return 0.5*(1+erf(z/Math.SQRT2));}
+  function lgamma(x){var c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];var y=x,tmp=x+5.5;tmp-=(x+0.5)*Math.log(tmp);var ser=1.000000000190015;for(var j=0;j<6;j++){y++;ser+=c[j]/y;}return -tmp+Math.log(2.5066282746310005*ser/x);}
+  function betacf(a,b,x){var FPMIN=1e-300,qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;var h=d;for(var m=1;m<=200;m++){var m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;d=1/d;var del=d*c;h*=del;if(Math.abs(del-1)<1e-12)break;}return h;}
+  function betai(a,b,x){if(x<=0)return 0;if(x>=1)return 1;var bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+  function tPdf(t,v){return Math.exp(lgamma((v+1)/2)-lgamma(v/2))/Math.sqrt(v*Math.PI)*Math.pow(1+t*t/v,-(v+1)/2);}
+  function tSF2(t,v){var x=v/(v+t*t);return betai(v/2,0.5,x);}
+  function tCrit(alpha,v){var lo=0,hi=1000;for(var i=0;i<80;i++){var mid=(lo+hi)/2;if(tSF2(mid,v)>alpha)lo=mid;else hi=mid;}return (lo+hi)/2;}
+
+  function generate(o){
+    var rng=mulberry32(o.seed),randn=normalGen(rng),pts=[];
+    for(var i=0;i<o.n;i++){
+      var x=clamp(o.xMean+o.xSd*randn(),o.xLo,o.xHi);
+      var y=o.b0+o.b1*x+o.noise*randn();
+      pts.push([r1(x),r1(y)]);
+    }
+    return pts;
+  }
+  function ols(pts){
+    var n=pts.length,sx=0,sy=0,i;
+    for(i=0;i<n;i++){sx+=pts[i][0];sy+=pts[i][1];}
+    var xbar=sx/n,ybar=sy/n,Sxy=0,Sxx=0,Syy=0;
+    for(i=0;i<n;i++){var dx=pts[i][0]-xbar,dy=pts[i][1]-ybar;Sxy+=dx*dy;Sxx+=dx*dx;Syy+=dy*dy;}
+    var b1=Sxy/Sxx,b0=ybar-b1*xbar,RSS=0,ESS=0;
+    for(i=0;i<n;i++){var yh=b0+b1*pts[i][0];RSS+=(pts[i][1]-yh)*(pts[i][1]-yh);ESS+=(yh-ybar)*(yh-ybar);}
+    var TSS=Syy,R2=ESS/TSS,df=n-2,s2=RSS/df,se=Math.sqrt(s2/Sxx),t=b1/se,p=2*(1-normCdf(Math.abs(t)));
+    return {n:n,xbar:xbar,ybar:ybar,Sxx:Sxx,Sxy:Sxy,Syy:Syy,b0:b0,b1:b1,RSS:RSS,ESS:ESS,TSS:TSS,R2:R2,df:df,se:se,t:t,p:p};
+  }
+
+  /* ---------- plotting helpers ---------- */
+  function makePlot(w,h,m,xDom,yDom){
+    var iw=w-m.l-m.r,ih=h-m.t-m.b;
+    return {w:w,h:h,m:m,iw:iw,ih:ih,xDom:xDom,yDom:yDom,
+      x:function(v){return m.l+(v-xDom[0])/(xDom[1]-xDom[0])*iw;},
+      y:function(v){return m.t+(1-(v-yDom[0])/(yDom[1]-yDom[0]))*ih;}};
+  }
+  function yDomain(pts,extra){
+    var ys=pts.map(function(p){return p[1];});
+    if(extra!=null)ys.push(extra);
+    var mn=Math.min.apply(null,ys),mx=Math.max.apply(null,ys);
+    return [Math.floor((mn-6)/10)*10, Math.ceil((mx+6)/10)*10];
+  }
+  function ticks(lo,hi,step){var a=[];for(var t=lo;t<=hi+1e-9;t+=step)a.push(Math.round(t*100)/100);return a;}
+  function frame(pc,xt,yt,xLabel,yLabel){
+    var xD=pc.xDom,yD=pc.yDom,o=[],i;
+    for(i=0;i<yt.length;i++)o.push('<line x1="'+pc.x(xD[0])+'" y1="'+pc.y(yt[i])+'" x2="'+pc.x(xD[1])+'" y2="'+pc.y(yt[i])+'" style="stroke:var(--grid);stroke-width:1"/>');
+    for(i=0;i<xt.length;i++)o.push('<line x1="'+pc.x(xt[i])+'" y1="'+pc.y(yD[0])+'" x2="'+pc.x(xt[i])+'" y2="'+pc.y(yD[1])+'" style="stroke:var(--grid);stroke-width:1"/>');
+    o.push('<line x1="'+pc.x(xD[0])+'" y1="'+pc.y(yD[0])+'" x2="'+pc.x(xD[1])+'" y2="'+pc.y(yD[0])+'" style="stroke:var(--axis);stroke-width:1.5"/>');
+    o.push('<line x1="'+pc.x(xD[0])+'" y1="'+pc.y(yD[0])+'" x2="'+pc.x(xD[0])+'" y2="'+pc.y(yD[1])+'" style="stroke:var(--axis);stroke-width:1.5"/>');
+    for(i=0;i<yt.length;i++)o.push('<text x="'+(pc.x(xD[0])-12)+'" y="'+(pc.y(yt[i])+4)+'" text-anchor="end" style="fill:var(--muted);font-size:12.5px">'+yt[i]+'</text>');
+    for(i=0;i<xt.length;i++)o.push('<text x="'+pc.x(xt[i])+'" y="'+(pc.y(yD[0])+24)+'" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">'+xt[i]+'</text>');
+    o.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.h-10)+'" text-anchor="middle" style="fill:var(--ink);font-size:14px">'+xLabel+'</text>');
+    o.push('<text transform="translate(18,'+(pc.m.t+pc.ih/2)+') rotate(-90)" text-anchor="middle" style="fill:var(--ink);font-size:13.5px">'+yLabel+'</text>');
+    return o.join('');
+  }
+  var el=function(id){return document.getElementById(id);};
+  var COMMON={n:100,xMean:19.6,xSd:2.3,xLo:14,xHi:26};
+
+  /* ---------- tabs ---------- */
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var pages={ols:el('page-ols'),r2:el('page-r2'),ht:el('page-ht')};
+  tabs.forEach(function(tb){
+    tb.addEventListener('click',function(){
+      tabs.forEach(function(x){x.classList.toggle('active',x===tb);});
+      for(var k in pages)pages[k].classList.toggle('active',k===tb.dataset.page);
+    });
+  });
+
+  /* ===================== PAGE 1 · OLS ===================== */
+  (function initOLS(){
+    var SCN=[
+      {b0:699,b1:-2.5,noise:8, seed:20240617},
+      {b0:699,b1:-2.5,noise:20,seed:7},
+      {b0:658,b1:-0.4,noise:10,seed:1},
+      {b0:748,b1:-5.0,noise:8, seed:23}
+    ];
+    var statG=el('ols-static'),dynG=el('ols-dyn');
+    var b0El=el('ols-b0'),b1El=el('ols-b1'),tRes=el('ols-res'),tSq=el('ols-sq'),tMean=el('ols-mean'),tExt=el('ols-ext'),scn=el('ols-scn');
+    var data,st,startB0,viewFull=true,xDom,yDom,pc;
+
+    function load(i){
+      var o=Object.assign({},COMMON,SCN[i]);
+      data=generate(o); st=ols(data);
+      startB0=Math.round(st.ybar/0.5)*0.5;
+      b0El.value=startB0; b1El.value=0;
+      setView();
+      el('ols-soln').innerHTML='OLS solution on these 100 points: <code>T̂S = '+st.b0.toFixed(1)+' '+(st.b1<0?'−':'+')+' '+Math.abs(st.b1).toFixed(2)+' × STR</code>, R² = '+st.R2.toFixed(2)+', minimum RSS = '+fmt(st.RSS)+'.';
+    }
+    function setView(){
+      viewFull=tExt.checked;
+      xDom=viewFull?[0,27]:[13,27];
+      yDom=yDomain(data, viewFull?st.b0:null);
+      pc=makePlot(820,480,{t:24,r:34,b:58,l:72},xDom,yDom);
+      el('ols-hint').textContent=viewFull
+        ?'β₀ is the predicted test score at STR = 0 — the ring on the vertical axis. Changing the slope pivots the line about that ring, so β₀ never moves.'
+        :'Zoomed to the data: the intercept (at STR = 0) is off the left edge, so tilting β₁ makes the visible line slide — but β₀ itself is unchanged.';
+      buildStatic(); render();
+    }
+    function buildStatic(){
+      var s=[];
+      var yt=ticks(yDom[0],yDom[1],(yDom[1]-yDom[0])>90?20:10);
+      var xt=viewFull?[0,5,10,15,20,25]:[14,16,18,20,22,24,26];
+      if(viewFull){
+        var bx=pc.x(14),bw=pc.x(26)-pc.x(14);
+        s.push('<rect x="'+bx+'" y="'+pc.m.t+'" width="'+bw+'" height="'+pc.ih+'" style="fill:var(--blue)" fill-opacity=".05"/>');
+        s.push('<text x="'+(bx+bw/2)+'" y="'+(pc.m.t+15)+'" text-anchor="middle" style="fill:var(--faint);font-size:11.5px">observed data (STR 14–26)</text>');
+      }
+      s.push(frame(pc,xt,yt,'Student–teacher ratio (STR)','Test score (TS)'));
+      statG.innerHTML=s.join('');
+    }
+    function rssAt(b0,b1){var r=0;for(var i=0;i<data.length;i++){var e=data[i][1]-(b0+b1*data[i][0]);r+=e*e;}return r;}
+    function render(){
+      var b0=parseFloat(b0El.value),b1=parseFloat(b1El.value);
+      el('ols-vb0').textContent=b0.toFixed(1); el('ols-vb1').textContent=b1.toFixed(2);
+      el('ols-eqB0').textContent=b0.toFixed(1); el('ols-eqSign').textContent=b1<0?'−':'+'; el('ols-eqB1').textContent=Math.abs(b1).toFixed(2);
+      var s=[],i,d,yh;
+      if(tSq.checked)for(i=0;i<data.length;i++){d=data[i];yh=b0+b1*d[0];var py=pc.y(d[1]),pl=pc.y(yh),side=Math.abs(py-pl),top=Math.min(py,pl);
+        s.push('<rect x="'+pc.x(d[0])+'" y="'+top+'" width="'+side+'" height="'+side+'" style="fill:var(--sq-fill);stroke:var(--sq-stroke)" stroke-width=".75"/>');}
+      if(tRes.checked)for(i=0;i<data.length;i++){d=data[i];yh=b0+b1*d[0];
+        s.push('<line x1="'+pc.x(d[0])+'" y1="'+pc.y(d[1])+'" x2="'+pc.x(d[0])+'" y2="'+pc.y(yh)+'" style="stroke:var(--coral)" stroke-width="1.3" stroke-opacity=".55"/>');}
+      s.push('<line x1="'+pc.x(xDom[0])+'" y1="'+pc.y(b0+b1*xDom[0])+'" x2="'+pc.x(xDom[1])+'" y2="'+pc.y(b0+b1*xDom[1])+'" style="stroke:var(--indigo)" stroke-width="3.5" stroke-linecap="round"/>');
+      for(i=0;i<data.length;i++){d=data[i];yh=b0+b1*d[0];var e=d[1]-yh;
+        s.push('<circle cx="'+pc.x(d[0])+'" cy="'+pc.y(d[1])+'" r="4.4" style="fill:var(--blue)" fill-opacity=".82" stroke="#fff" stroke-width="1"><title>STR='+d[0].toFixed(1)+', TS='+d[1].toFixed(1)+' | predicted='+yh.toFixed(1)+' | residual='+e.toFixed(1)+'</title></circle>');}
+      if(tMean.checked){var cx=pc.x(st.xbar),cy=pc.y(st.ybar),r=6.5;
+        s.push('<rect x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+(2*r)+'" height="'+(2*r)+'" transform="rotate(45 '+cx+' '+cy+')" style="fill:var(--amber)" stroke="#fff" stroke-width="1.5"><title>mean (STR='+st.xbar.toFixed(1)+', TS='+st.ybar.toFixed(1)+')</title></rect>');}
+      if(viewFull){var mx=pc.x(0),my=pc.y(b0);
+        s.push('<circle cx="'+mx+'" cy="'+my+'" r="6.5" style="fill:var(--card);stroke:var(--indigo)" stroke-width="2.5"/>');
+        s.push('<circle cx="'+mx+'" cy="'+my+'" r="1.7" style="fill:var(--indigo)"/>');
+        s.push('<text x="'+(mx+12)+'" y="'+(my-10)+'" style="fill:var(--indigo);font-size:13px;font-weight:600">β₀ = '+b0.toFixed(0)+'</text>');}
+      dynG.innerHTML=s.join('');
+
+      var r2val=rssAt(b0,b1);
+      el('ols-rss').textContent=fmt(r2val);
+      var over=(r2val/st.RSS-1)*100,atMin=over<0.5;
+      el('ols-rssnote').textContent=atMin?'the lowest RSS possible':'+'+Math.round(over)+'% above the minimum';
+      var r2=1-r2val/st.TSS;
+      el('ols-r2').textContent=(r2>=0?'':'−')+Math.abs(r2).toFixed(2);
+      var frac=Math.max(0,Math.min(1,st.RSS/r2val));
+      el('ols-fill').style.width=(frac*100).toFixed(0)+'%'; el('ols-pct').textContent=(frac*100).toFixed(0)+'%';
+      el('ols-cap').textContent='best-fit RSS = '+fmt(st.RSS)+'  ·  total SS = '+fmt(st.TSS);
+      el('ols-badge').style.display=atMin?'inline-flex':'none';
+    }
+    function animateTo(tb0,tb1){
+      var sb0=parseFloat(b0El.value),sb1=parseFloat(b1El.value),dur=780,t0=performance.now();
+      function step(now){var k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);
+        b0El.value=(sb0+(tb0-sb0)*e).toFixed(1);b1El.value=(sb1+(tb1-sb1)*e).toFixed(2);render();
+        if(k<1)requestAnimationFrame(step);else{b0El.value=tb0.toFixed(1);b1El.value=tb1.toFixed(2);render();}}
+      requestAnimationFrame(step);
+    }
+    [b0El,b1El,tRes,tSq,tMean].forEach(function(e){e.addEventListener('input',render);});
+    tExt.addEventListener('change',setView);
+    el('ols-snap').addEventListener('click',function(){animateTo(st.b0,st.b1);});
+    el('ols-reset').addEventListener('click',function(){b0El.value=startB0;b1El.value=0;render();});
+    scn.addEventListener('change',function(){load(+scn.value);});
+    load(0);
+  })();
+
+  /* ===================== PAGE 2 · R² ===================== */
+  (function initR2(){
+    var SCN=[
+      {b1:-2.5,noise:3, seed:101},
+      {b1:-2.5,noise:6, seed:102},
+      {b1:-2.5,noise:10,seed:103},
+      {b1:0,   noise:8, seed:104}
+    ];
+    var BASE={n:100,b0:699,xMean:19.6,xSd:2.3,xLo:14,xHi:26};
+    var statG=el('r2-static'),dynG=el('r2-dyn');
+    var tTot=el('r2-tot'),tExp=el('r2-exp'),tRes=el('r2-res'),scn=el('r2-scn');
+    var data,st,xDom=[13,27],yDom,pc;
+
+    function load(i){
+      var o=Object.assign({},BASE,SCN[i]);
+      if(SCN[i].b1===0)o.b0=650;
+      data=generate(o); st=ols(data);
+      yDom=yDomain(data,null);
+      pc=makePlot(820,480,{t:24,r:34,b:58,l:72},xDom,yDom);
+      buildStatic(); render();
+    }
+    function buildStatic(){
+      var yt=ticks(yDom[0],yDom[1],(yDom[1]-yDom[0])>90?20:10);
+      statG.innerHTML=frame(pc,[14,16,18,20,22,24,26],yt,'Student–teacher ratio (STR)','Test score (TS)');
+    }
+    function render(){
+      var s=[],i,d,yh,ybar=st.ybar;
+      if(tTot.checked)for(i=0;i<data.length;i++){d=data[i];
+        s.push('<line x1="'+pc.x(d[0])+'" y1="'+pc.y(d[1])+'" x2="'+pc.x(d[0])+'" y2="'+pc.y(ybar)+'" style="stroke:var(--amber)" stroke-width="1.2" stroke-opacity=".5"/>');}
+      if(tExp.checked)for(i=0;i<data.length;i++){d=data[i];yh=st.b0+st.b1*d[0];
+        s.push('<line x1="'+pc.x(d[0])+'" y1="'+pc.y(ybar)+'" x2="'+pc.x(d[0])+'" y2="'+pc.y(yh)+'" style="stroke:var(--teal)" stroke-width="2" stroke-opacity=".55"/>');}
+      if(tRes.checked)for(i=0;i<data.length;i++){d=data[i];yh=st.b0+st.b1*d[0];
+        s.push('<line x1="'+pc.x(d[0])+'" y1="'+pc.y(d[1])+'" x2="'+pc.x(d[0])+'" y2="'+pc.y(yh)+'" style="stroke:var(--coral)" stroke-width="1.3" stroke-opacity=".6"/>');}
+      s.push('<line x1="'+pc.x(xDom[0])+'" y1="'+pc.y(ybar)+'" x2="'+pc.x(xDom[1])+'" y2="'+pc.y(ybar)+'" style="stroke:var(--amber)" stroke-width="1.8" stroke-dasharray="6 5"/>');
+      s.push('<text x="'+(pc.x(xDom[1])-4)+'" y="'+(pc.y(ybar)-6)+'" text-anchor="end" style="fill:var(--amber);font-size:12px;font-weight:600">mean T̄S = '+ybar.toFixed(0)+'</text>');
+      s.push('<line x1="'+pc.x(xDom[0])+'" y1="'+pc.y(st.b0+st.b1*xDom[0])+'" x2="'+pc.x(xDom[1])+'" y2="'+pc.y(st.b0+st.b1*xDom[1])+'" style="stroke:var(--indigo)" stroke-width="3.2" stroke-linecap="round"/>');
+      for(i=0;i<data.length;i++){d=data[i];yh=st.b0+st.b1*d[0];
+        s.push('<circle cx="'+pc.x(d[0])+'" cy="'+pc.y(d[1])+'" r="4.2" style="fill:var(--blue)" fill-opacity=".82" stroke="#fff" stroke-width="1"><title>STR='+d[0].toFixed(1)+', TS='+d[1].toFixed(1)+' | fitted='+yh.toFixed(1)+'</title></circle>');}
+      dynG.innerHTML=s.join('');
+
+      var essPct=st.ESS/st.TSS*100,rssPct=st.RSS/st.TSS*100;
+      el('r2-ess-seg').style.width=essPct.toFixed(2)+'%';
+      el('r2-rss-seg').style.width=rssPct.toFixed(2)+'%';
+      el('r2-ess-seg').textContent=essPct>9?Math.round(essPct)+'%':'';
+      el('r2-rss-seg').textContent=rssPct>9?Math.round(rssPct)+'%':'';
+      el('r2-r2').textContent=st.R2.toFixed(2);
+      el('r2-r2note').textContent=Math.round(st.R2*100)+'% of the variation explained';
+      var r=(st.b1<0?-1:(st.b1>0?1:0))*Math.sqrt(Math.max(0,st.R2));
+      el('r2-corr').textContent=(r>=0?'':'−')+Math.abs(r).toFixed(2);
+      el('r2-tss').textContent=fmt(st.TSS);
+      el('r2-essv').textContent=fmt(st.ESS);
+      el('r2-rssv').textContent=fmt(st.RSS);
+      el('r2-b1').textContent=st.b1.toFixed(2);
+    }
+    [tTot,tExp,tRes].forEach(function(e){e.addEventListener('input',render);});
+    scn.addEventListener('change',function(){load(+scn.value);});
+    load(1);
+  })();
+
+  /* ===================== PAGE 3 · HYPOTHESIS TESTING ===================== */
+  (function initHT(){
+    var BASE={b0:699,b1:-2.5,noise:10,xMean:19.6,xSd:2.3,xLo:14,xHi:26};
+    var sg=el('ht-scatter-g'),cg=el('ht-curve-g');
+    var alphaSel=el('ht-alpha'),nEl=el('ht-n'),newBtn=el('ht-new');
+    var seed=2024,data,st;
+
+    function recompute(){
+      data=generate(Object.assign({},BASE,{n:+nEl.value,seed:seed}));
+      st=ols(data); render();
+    }
+    function drawScatter(){
+      var yDom=yDomain(data,null),xDom=[13,27];
+      var pc=makePlot(820,300,{t:18,r:30,b:46,l:64},xDom,yDom);
+      var yt=ticks(yDom[0],yDom[1],(yDom[1]-yDom[0])>90?20:10);
+      var s=[frame(pc,[14,16,18,20,22,24,26],yt,'Student–teacher ratio (STR)','Test score')];
+      s.push('<line x1="'+pc.x(xDom[0])+'" y1="'+pc.y(st.b0+st.b1*xDom[0])+'" x2="'+pc.x(xDom[1])+'" y2="'+pc.y(st.b0+st.b1*xDom[1])+'" style="stroke:var(--indigo)" stroke-width="3" stroke-linecap="round"/>');
+      for(var i=0;i<data.length;i++)s.push('<circle cx="'+pc.x(data[i][0])+'" cy="'+pc.y(data[i][1])+'" r="4" style="fill:var(--blue)" fill-opacity=".8" stroke="#fff" stroke-width="1"/>');
+      s.push('<text x="'+(pc.m.l+6)+'" y="'+(pc.m.t+15)+'" style="fill:var(--muted);font-size:12px">n = '+data.length+' sampled districts · fitted slope β̂₁ = '+st.b1.toFixed(2)+'</text>');
+      sg.innerHTML=s.join('');
+    }
+    function drawCurve(tc,df){
+      var xDom=[-4,4],yDom=[0,0.43];
+      var pc=makePlot(820,300,{t:44,r:30,b:46,l:40},xDom,yDom);
+      var tp=function(z){return tPdf(z,df);};
+      var np=function(z){return Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);};
+      var s=[],z;
+      s.push('<line x1="'+pc.x(-4)+'" y1="'+pc.y(0)+'" x2="'+pc.x(4)+'" y2="'+pc.y(0)+'" style="stroke:var(--axis);stroke-width:1.5"/>');
+      [-3,-2,-1,0,1,2,3].forEach(function(t){
+        s.push('<line x1="'+pc.x(t)+'" y1="'+pc.y(0)+'" x2="'+pc.x(t)+'" y2="'+(pc.y(0)+5)+'" style="stroke:var(--axis);stroke-width:1"/>');
+        s.push('<text x="'+pc.x(t)+'" y="'+(pc.y(0)+20)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+t+'</text>');});
+      function area(z0,z1){var seg=['M'+pc.x(z0)+','+pc.y(0)];for(z=z0;z<=z1+1e-9;z+=0.04)seg.push('L'+pc.x(z)+','+pc.y(tp(z)));seg.push('L'+pc.x(z1)+','+pc.y(0)+'Z');return seg.join('');}
+      s.push('<path d="'+area(tc,4)+'" style="fill:var(--coral)" fill-opacity=".28"/>');
+      s.push('<path d="'+area(-4,-tc)+'" style="fill:var(--coral)" fill-opacity=".28"/>');
+      var nc=[];for(z=-4;z<=4.0001;z+=0.05)nc.push((z<=-4?'M':'L')+pc.x(z)+','+pc.y(np(z)));
+      s.push('<path d="'+nc.join('')+'" fill="none" style="stroke:var(--faint)" stroke-width="1.6" stroke-dasharray="5 4"/>');
+      var cur=[];for(z=-4;z<=4.0001;z+=0.04)cur.push((z<=-4?'M':'L')+pc.x(z)+','+pc.y(tp(z)));
+      s.push('<path d="'+cur.join('')+'" fill="none" style="stroke:var(--indigo)" stroke-width="2.5"/>');
+      [tc,-tc].forEach(function(zv){s.push('<line x1="'+pc.x(zv)+'" y1="'+pc.y(0)+'" x2="'+pc.x(zv)+'" y2="'+pc.y(tp(zv))+'" style="stroke:var(--coral)" stroke-width="1.5" stroke-dasharray="4 4"/>');});
+      s.push('<text x="'+pc.x(tc)+'" y="'+(pc.y(0)+36)+'" text-anchor="middle" style="fill:var(--coral);font-size:11.5px;font-weight:600">+t* = '+tc.toFixed(2)+'</text>');
+      s.push('<text x="'+pc.x(-tc)+'" y="'+(pc.y(0)+36)+'" text-anchor="middle" style="fill:var(--coral);font-size:11.5px;font-weight:600">−t* = '+tc.toFixed(2)+'</text>');
+      var tt=Math.max(-3.97,Math.min(3.97,st.t));
+      s.push('<line x1="'+pc.x(tt)+'" y1="'+pc.y(0)+'" x2="'+pc.x(tt)+'" y2="'+pc.m.t+'" style="stroke:var(--ink)" stroke-width="2"/>');
+      s.push('<circle cx="'+pc.x(tt)+'" cy="'+pc.y(tp(tt))+'" r="4.5" style="fill:var(--ink)"/>');
+      s.push('<text x="'+pc.x(tt)+'" y="'+(pc.m.t-6)+'" text-anchor="middle" style="fill:var(--ink);font-size:12.5px;font-weight:700">t = '+st.t.toFixed(2)+'</text>');
+      s.push('<text x="'+(pc.w/2)+'" y="14" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">Sampling distribution of t under H₀ — t-distribution with df = '+df+', vs standard normal (dashed)</text>');
+      s.push('<text x="'+(pc.w/2)+'" y="29" text-anchor="middle" style="fill:var(--faint);font-size:11px">shaded tails = rejection region · as n grows the t-curve tightens onto the normal</text>');
+      cg.innerHTML=s.join('');
+    }
+    function render(){
+      el('ht-nv').textContent=nEl.value;
+      var alpha=parseFloat(alphaSel.value),df=st.df,tc=tCrit(alpha,df),pT=tSF2(st.t,df);
+      drawScatter(); drawCurve(tc,df);
+      el('ht-b1').textContent=st.b1.toFixed(2);
+      el('ht-se').textContent='SE = '+st.se.toFixed(2);
+      el('ht-t').textContent=st.t.toFixed(2);
+      el('ht-df').textContent='df = n − 2 = '+df;
+      el('ht-p').textContent=pT<0.001?'< 0.001':pT.toFixed(3);
+      el('ht-pnote').textContent='from t with df = '+df;
+      el('ht-zc').textContent='±'+tc.toFixed(2);
+      el('ht-zcnote').textContent='t, df = '+df;
+      el('ht-alpha-lbl').textContent=Math.round(alpha*100)+'%';
+      var reject=Math.abs(st.t)>tc;
+      var dec=el('ht-decision');
+      dec.className='decision '+(reject?'reject':'fail');
+      dec.textContent=reject?'Reject H₀':'Fail to reject H₀';
+      el('ht-decmsg').textContent=reject
+        ?'The slope is statistically significant at this level — STR appears to be related to test scores.'
+        :'The slope is not statistically distinguishable from 0 at this level.';
+      var lo=st.b1-tc*st.se,hi=st.b1+tc*st.se;
+      el('ht-ci').innerHTML=Math.round((1-alpha)*100)+'% confidence interval for β₁: <b>['+lo.toFixed(2)+', '+hi.toFixed(2)+']</b>';
+      el('ht-interp').textContent=reject
+        ?'0 lies outside the interval, so β₁ = 0 is implausible at this level — equivalent to the test above.'
+        :'0 lies inside the interval, so we cannot rule out β₁ = 0 at this level.';
+    }
+    alphaSel.addEventListener('change',render);
+    nEl.addEventListener('input',recompute);
+    newBtn.addEventListener('click',function(){seed++;recompute();});
+    nEl.value=30; recompute();
+  })();
+})();
+</script>
+</body>
+</html>
