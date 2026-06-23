@@ -19,16 +19,22 @@
     --bg-grad:linear-gradient(180deg,#f7fafb 0%,#f1f6f7 48%,#e9f1f2 100%);
     --shadow:0 1px 2px rgba(0,33,71,.06),0 14px 34px rgba(0,33,71,.08);
     --btn-grad:linear-gradient(135deg,#002147,#008c8c);
+    /* Panel-only academic accents — never used by the SVG diagrams, only by surrounding UI panels */
+    --panel-maroon:#7a1f3d; --panel-maroon-fill:rgba(122,31,61,.08); --panel-maroon-stroke:rgba(122,31,61,.32);
+    --panel-forest:#1f4d3d; --panel-forest-fill:rgba(31,77,61,.08); --panel-forest-stroke:rgba(31,77,61,.32);
+    --panel-slate:#33415c; --panel-slate-fill:rgba(51,65,92,.07); --panel-slate-stroke:rgba(51,65,92,.30);
+    --panel-gold:#8a6a1e; --panel-gold-fill:rgba(138,106,30,.10); --panel-gold-stroke:rgba(138,106,30,.34);
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg-grad) fixed;background-color:var(--bg);color:var(--ink);min-height:100vh;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;line-height:1.6}
   .wrap{max-width:1040px;margin:0 auto;padding:26px 22px 56px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 18px;padding:16px 18px;background:rgba(255,255,255,.86);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);position:sticky;top:12px;z-index:20;backdrop-filter:blur(12px)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 18px;padding:16px 18px;background:var(--indigo);border:1px solid rgba(0,0,0,.18);border-radius:18px;box-shadow:var(--shadow);position:sticky;top:12px;z-index:20;overflow:hidden}
+  .topbar::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--panel-gold)}
   .titleblock{min-width:0}
-  h1{font-size:24px;font-weight:800;margin:0;letter-spacing:-.018em;color:var(--ink);line-height:1.2}
-  .sub{font-size:13.5px;color:var(--muted);margin:4px 0 0}
+  h1{font-size:24px;font-weight:800;margin:0;letter-spacing:-.018em;color:#f3f6fa;line-height:1.2}
+  .sub{font-size:13.5px;color:rgba(234,240,246,.78);margin:4px 0 0}
   .lead{font-size:14.5px;color:var(--muted);max-width:820px;margin:0 0 18px}
   .lead b{color:var(--ink);font-weight:600}
 
@@ -84,7 +90,7 @@
   .tog.tealbox input{accent-color:var(--teal)}
   .tog.amberbox input{accent-color:var(--amber)}
   .metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .metric{background:var(--bg);border-radius:12px;padding:11px 13px;border:1px solid var(--border)}
+  .metric{background:var(--panel-gold-fill);border-radius:12px;padding:11px 13px;border:1px solid var(--panel-gold-stroke)}
   .metric.rss{background:var(--sq-fill);border-color:var(--sq-stroke)}
   .metric.r2{background:var(--teal-fill);border-color:var(--teal-stroke)}
   .mlab{font-size:12.5px;color:var(--muted)}
@@ -147,8 +153,9 @@
 
   /* learning shell upgrades */
   .hero{display:block;margin:0 0 20px}
-  .hero-card{padding:17px 20px;border-radius:18px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,33,71,.035),rgba(0,140,140,.08)),var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
-  .hero-card::after{content:"";position:absolute;right:-90px;top:-90px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(0,140,140,.12),transparent 65%)}
+  .hero-card{padding:19px 20px 20px;border-radius:18px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,33,71,.05),rgba(47,111,221,.08)),var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+  .hero-card::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--panel-gold)}
+  .hero-card::after{content:"";position:absolute;right:-90px;top:-90px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.14),transparent 65%)}
   .eyebrow{display:none}
   .hero h2{display:none}
   .hero p{margin:0;color:var(--muted);font-size:14.5px;max-width:760px}
@@ -169,18 +176,20 @@
   .tabs{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,var(--bg) 0%,rgba(255,255,255,0) 120%);backdrop-filter:blur(10px);padding-top:6px}
   .section-nav{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0;padding:0;background:transparent;backdrop-filter:none;flex:none}
   .section-nav label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .section-picker{appearance:none;-webkit-appearance:none;min-width:255px;font:inherit;font-size:14px;font-weight:750;color:var(--ink);background-color:#fff;border:1px solid var(--border2);border-radius:12px;padding:10px 42px 10px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(0,33,71,.06);background-image:linear-gradient(45deg,transparent 50%,var(--teal) 50%),linear-gradient(135deg,var(--teal) 50%,transparent 50%),linear-gradient(135deg,rgba(0,33,71,.035),rgba(0,140,140,.075));background-position:calc(100% - 21px) 52%,calc(100% - 15px) 52%,0 0;background-size:6px 6px,6px 6px,100% 100%;background-repeat:no-repeat}
+  .section-picker{appearance:none;-webkit-appearance:none;min-width:255px;font:inherit;font-size:14px;font-weight:750;color:var(--ink);background-color:#fff;border:1px solid var(--border2);border-radius:12px;padding:10px 42px 10px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.22);background-image:linear-gradient(45deg,transparent 50%,var(--teal) 50%),linear-gradient(135deg,var(--teal) 50%,transparent 50%),linear-gradient(135deg,rgba(0,33,71,.035),rgba(0,140,140,.075));background-position:calc(100% - 21px) 52%,calc(100% - 15px) 52%,0 0;background-size:6px 6px,6px 6px,100% 100%;background-repeat:no-repeat}
   .section-picker:hover{border-color:var(--indigo)}
   .section-picker:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,140,140,.16),0 1px 2px rgba(0,33,71,.06)}
   .lesson-box{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
-  .lesson{padding:13px 15px;border-radius:14px;background:rgba(0,140,140,.065);border:1px solid var(--border)}
+  .lesson{padding:13px 15px;border-radius:14px;border:1px solid var(--border);border-left:4px solid transparent}
+  .lesson-box .lesson:nth-child(1){background:var(--panel-forest-fill);border-color:var(--panel-forest-stroke);border-left-color:var(--panel-forest)}
+  .lesson-box .lesson:nth-child(2){background:var(--panel-maroon-fill);border-color:var(--panel-maroon-stroke);border-left-color:var(--panel-maroon)}
   .lesson strong{display:block;color:var(--ink);font-size:13px;margin-bottom:4px}
   .lesson span{font-size:12.6px;color:var(--muted);display:block;line-height:1.5}
-  details.help{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:12px 0;box-shadow:var(--shadow)}
-  details.help summary{cursor:pointer;font-weight:800;color:var(--ink);font-size:13.5px}
+  details.help{background:var(--panel-slate-fill);border:1px solid var(--panel-slate-stroke);border-left:4px solid var(--panel-slate);border-radius:14px;padding:11px 14px;margin:12px 0;box-shadow:var(--shadow)}
+  details.help summary{cursor:pointer;font-weight:800;color:var(--panel-slate);font-size:13.5px}
   details.help p, details.help li{font-size:13px;color:var(--muted);line-height:1.55}
   .formula-strip{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
-  .formula-pill{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 10px}
+  .formula-pill{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 10px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
   @media (max-width:760px){.lesson-box{grid-template-columns:1fr}.wrap{padding:18px 12px 44px}.topbar{position:static;align-items:flex-start;flex-direction:column}.tabs{top:0;overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}.section-nav{width:100%;align-items:flex-start;flex-direction:column;gap:6px}.section-picker{width:100%;min-width:0}.plotcard{overflow-x:auto}.plotcard svg{min-width:720px}.metrics{grid-template-columns:1fr}}
 
 </style>
