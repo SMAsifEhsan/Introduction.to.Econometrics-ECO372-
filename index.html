@@ -896,8 +896,31 @@
       s.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.h-8)+'" text-anchor="middle" style="fill:var(--ink);font-size:13px">'+xlab+'</text>');
       return s.join('');
     }
-    function bars(pc,d,lo,binW,fill,op){var s=[],k,y0=pc.y(0);for(k=0;k<d.length;k++){if(d[k]<=0)continue;var x0=pc.x(lo+k*binW),x1=pc.x(lo+(k+1)*binW),yt=pc.y(d[k]);s.push('<rect x="'+x0.toFixed(1)+'" y="'+yt.toFixed(1)+'" width="'+Math.max(0.5,x1-x0-0.6).toFixed(1)+'" height="'+(y0-yt).toFixed(1)+'" style="fill:'+fill+'" fill-opacity="'+op+'"/>');}return s.join('');}
-    function vline(pc,x,col,dash,label,ly){var ypos=(ly!=null)?ly:(pc.m.t-5);var s='<line x1="'+pc.x(x)+'" y1="'+pc.y(0)+'" x2="'+pc.x(x)+'" y2="'+pc.m.t+'" style="stroke:'+col+';stroke-width:2"'+(dash?' stroke-dasharray="5 4"':'')+'/>';if(label)s+='<text x="'+pc.x(x)+'" y="'+ypos+'" text-anchor="middle" style="fill:'+col+';font-size:11.5px;font-weight:700">'+label+'</text>';return s;}
+    function bars(pc,d,lo,binW,fill,op){var s=[],k,y0=pc.y(0);for(k=0;k<d.length;k++){if(d[k]<=0)continue;var x0=pc.x(lo+k*binW),x1=pc.x(lo+(k+1)*binW),yt=pc.y(d[k]);s.push('<rect x="'+x0.toFixed(1)+'" y="'+yt.toFixed(1)+'" width="'+Math.max(0.5,x1-x0-0.6).toFixed(1)+'" height="'+(y0-yt).toFixed(1)+'" style="fill:'+fill+';stroke:'+fill+'" fill-opacity="'+op+'" stroke-opacity=".70" stroke-width=".7"/>');}return s.join('');}
+    function vline(pc,x,col,dash,label,ly){var ypos=(ly!=null)?ly:(pc.m.t-5);var s='<line x1="'+pc.x(x)+'" y1="'+pc.y(0)+'" x2="'+pc.x(x)+'" y2="'+pc.m.t+'" style="stroke:'+col+';stroke-width:2.4"'+(dash?' stroke-dasharray="5 4"':'')+'/>';if(label)s+='<text x="'+pc.x(x)+'" y="'+ypos+'" text-anchor="middle" style="fill:'+col+';font-size:11.5px;font-weight:700">'+label+'</text>';return s;}
+    function estimatorStyles(){
+      if(mode==='efficiency'){
+        return est==='mean'
+          ?{a:{color:'var(--indigo)',label:'Estimator 1: sample mean X̅'},b:{color:'var(--coral)',label:'Estimator 2: sample median'}}
+          :{a:{color:'var(--indigo)',label:'Estimator 1: full-sample OLS β̂₁'},b:{color:'var(--coral)',label:'Estimator 2: half-sample slope'}};
+      }
+      if(mode==='unbiased'){
+        return est==='mean'
+          ?{a:{color:'var(--indigo)',label:'Unbiased estimator: sample mean X̅'},b:{color:'var(--coral)',label:'Biased estimator: lower-half mean'}}
+          :{a:{color:'var(--indigo)',label:'Unbiased estimator: OLS β̂₁'},b:{color:'var(--coral)',label:'Biased estimator: noisy-x slope'}};
+      }
+      return {a:{color:'var(--indigo)',label:'Estimator'},b:{color:'var(--coral)',label:'Alternative'}};
+    }
+    function plotLegend(pc,items){
+      var s=[],x=pc.m.l+8,y=28,step=0;
+      items.forEach(function(it,idx){
+        var yy=y+idx*18;
+        s.push('<rect x="'+x+'" y="'+(yy-10)+'" width="14" height="10" rx="2" style="fill:'+it.color+';stroke:'+it.color+'" fill-opacity=".58" stroke-opacity=".85"/>');
+        s.push('<text x="'+(x+21)+'" y="'+yy+'" style="fill:'+it.color+';font-size:12.2px;font-weight:800">'+it.label+'</text>');
+        step=idx;
+      });
+      return s.join('');
+    }
     function buildUniformPanel(w,h){
       var m2={t:16,r:30,b:34,l:56};
       var pc2=makePlot(w,h,m2,[0,1],[0,1.25]);
@@ -935,12 +958,15 @@
       var pc=makePlot(820,420,{t:58,r:30,b:50,l:56},[lo,hi],[0,yMax]);
       var xlab=mode==='clt'?'sample mean of m Uniform(0,1) draws':(est==='mean'?'estimate of the mean':'estimate of the slope β₁');
       var s=[axis(pc,lo,hi,xlab)];
-      s.push(bars(pc,dA,lo,binW,'var(--indigo)',hasB?'.42':'.55'));
-      if(dB)s.push(bars(pc,dB,lo,binW,mode==='unbiased'?'var(--coral)':'var(--teal)','.38'));
+      var styles=estimatorStyles();
+      s.push(bars(pc,dA,lo,binW,styles.a.color,hasB?'.50':'.60'));
+      if(dB)s.push(bars(pc,dB,lo,binW,styles.b.color,'.43'));
       s.push('<path d="'+curvePath(pc,trueVal,predSD,lo,hi)+'" fill="none" style="stroke:var(--ink)" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>');
-      var sa=stat(A);
+      var sa=stat(A), sbLine=hasB?stat(B):null;
       s.push(vline(pc,trueVal,'var(--ink)',false,'true '+fmtVal(trueVal),pc.m.t-26));
-      s.push(vline(pc,sa.mean,'var(--indigo)',true,'Ê '+fmtVal(sa.mean),pc.m.t-9));
+      s.push(vline(pc,sa.mean,styles.a.color,true,'mean 1: '+fmtVal(sa.mean),pc.m.t-9));
+      if(sbLine)s.push(vline(pc,sbLine.mean,styles.b.color,true,'mean 2: '+fmtVal(sbLine.mean),pc.m.t+8));
+      if(hasB)s.push(plotLegend(pc,[styles.a,styles.b]));
       s.push('<text x="'+(pc.w/2)+'" y="16" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">'+mcTitle(A.length)+'</text>');
       var histHTML=s.join('');
       if(mode==='clt'){
@@ -995,10 +1021,10 @@
       if(mode==='unbiased'){
         T.innerHTML='Unbiasedness — '+estName;
         D.innerHTML='An estimator is <b>unbiased</b> if its sampling distribution centres on the true parameter: E(estimator) = true value. Draw more samples and the dashed line (average of estimates) settles onto the solid true line.';
-        N.textContent='Tick “Show a biased estimator” to overlay one whose histogram sits to one side of the truth.';
+        N.textContent='Tick “Show a biased estimator” to overlay a red biased estimator against the dark-blue unbiased estimator; the red dashed mean line sits away from the true value.';
       } else if(mode==='efficiency'){
         T.innerHTML='Efficiency — '+(est==='mean'?'<span class=\"sym-over\">X</span> vs sample median':'OLS <span class=\"sym-hat\">β</span><sub>1</sub> vs half-sample slope');
-        D.innerHTML='Among <b>unbiased</b> estimators, the <b>efficient</b> one has the smallest variance. Both histograms share the same centre (both unbiased); the narrower blue one wastes less information.';
+        D.innerHTML='Among <b>unbiased</b> estimators, the <b>efficient</b> one has the smallest variance. Both histograms share the same centre (both unbiased); Estimator 1 is shown in dark blue and Estimator 2 in red so their spreads are easier to compare.';
         N.innerHTML='For normal data <span class=\"sym-over\">X</span> beats the median; for the slope, full-sample OLS beats using half the data — OLS is the Best Linear Unbiased Estimator.';
       } else if(mode==='consistency'){
         T.innerHTML='Consistency & asymptotic efficiency — '+estName;
