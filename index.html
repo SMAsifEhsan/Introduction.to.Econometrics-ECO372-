@@ -252,7 +252,7 @@
     </nav>
   </header>
 
-  <section class="hero" aria-label="Course introduction">
+  <section class="hero" id="hero-block" aria-label="Course introduction">
     <div class="hero-card">
       <p>Use the simulations below: first predict what should happen, then change the line, sample size, or scenario, and finally explain the result in plain language.</p>
       <div class="formula-strip" aria-label="Formula reminders">
@@ -1084,13 +1084,20 @@
   var pages={props:el('page-props'),ols:el('page-ols'),r2:el('page-r2'),ht:el('page-ht'),
              nl:el('page-nl'),panel:el('page-panel'),bin:el('page-bin'),iv:el('page-iv')};
   var sectionPicker=el('section-picker');
+  /* The intro card's formula reminders (ŷ, RSS, R², t) belong to the single-regressor
+     chapters only. Sections whose formulas are different hide it rather than show
+     reminders that do not apply to what is on screen. */
+  var HERO_ON={ols:1,r2:1,ht:1};
   function showPage(page){
     if(!pages[page]) return;
     for(var k in pages) if(pages[k]) pages[k].classList.toggle('active',k===page);
+    var hero=el('hero-block');
+    if(hero) hero.classList.toggle('hidden',!HERO_ON[page]);
     if(sectionPicker && sectionPicker.value!==page) sectionPicker.value=page;
   }
   if(sectionPicker){
     sectionPicker.addEventListener('change',function(){showPage(this.value);});
+    showPage(sectionPicker.value);   /* apply on load, not only on change */
   }
 
   /* ===================== PAGE 1 · OLS ===================== */
