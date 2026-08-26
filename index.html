@@ -53,8 +53,13 @@
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
   /* scenario row + select */
-  .ctlrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+  .ctlrow{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin:0 0 14px}
   .ctlrow .lbl{font-size:13px;color:var(--muted);font-weight:600}
+  /* a label + its slider + its readout travel together and never break across lines */
+  .sgroup{display:inline-flex;align-items:center;gap:9px;flex:0 1 auto}
+  .sgroup > .lbl{flex:none;white-space:nowrap;margin-left:0!important}
+  .sgroup > input[type=range]{flex:1 1 120px;min-width:88px}
+  .sgroup > .val{flex:none;min-width:44px;text-align:right}
   select.sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:14px;color:var(--ink);
     background-color:var(--card);border:1px solid var(--border2);border-radius:10px;padding:9px 36px 9px 13px;cursor:pointer;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
@@ -141,6 +146,33 @@
 
   .note{font-size:12.5px;color:var(--faint);margin-top:14px;line-height:1.55}
   .hidden{display:none!important}
+
+  /* regression-output table (Ch.6-8 style: coefficient with SE beneath in parentheses) */
+  .regtable{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 2px}
+  .regtable caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);font-weight:700;padding-bottom:7px}
+  .regtable th{text-align:left;font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;
+    letter-spacing:.04em;padding:6px 10px 6px 0;border-bottom:1.5px solid var(--border2)}
+  .regtable th.num,.regtable td.num{text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .regtable td{padding:7px 10px 7px 0;border-bottom:1px solid var(--border);vertical-align:top}
+  .regtable td.coef{font-weight:700;color:var(--ink)}
+  .regtable .se{display:block;font-size:11.5px;color:var(--faint);font-weight:400}
+  .regtable tr.sep td{border-top:1.5px solid var(--border2);border-bottom:none;color:var(--muted);font-size:12.5px}
+  .regtable tr.hi td{background:var(--teal-fill)}
+  .regtable .star{color:var(--coral);font-weight:800}
+
+  /* node-and-arrow causal path figures (OVB, control variables, IV) */
+  .pathfig{width:100%;height:auto;display:block}
+  .pathnode{font-size:13px;font-weight:800}
+  .pathlbl{font-size:11.5px;font-weight:700}
+
+  /* small inline stat chips used under diagrams */
+  .statrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .statchip{font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 9px;color:var(--ink)}
+  .statchip b{font-weight:800}
+  .statchip.good{background:var(--teal-fill);border-color:var(--teal-stroke);color:var(--teal)}
+  .statchip.bad{background:var(--sq-fill);border-color:var(--sq-stroke);color:var(--coral)}
+  .statchip.warn{background:var(--amber-fill);border-color:var(--amber-stroke);color:var(--amber)}
   footer{margin-top:26px;font-size:12.5px;color:var(--muted);line-height:1.55}
   footer code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--card);padding:1px 5px;border-radius:5px;border:1px solid var(--border)}
 
@@ -204,10 +236,18 @@
     <nav class="section-nav" aria-label="Section navigation">
       <label for="section-picker">Section</label>
       <select id="section-picker" class="section-picker">
-        <option value="props">Properties of the estimator</option>
-        <option value="ols" selected>OLS estimation</option>
-        <option value="r2">R² goodness of fit</option>
-        <option value="ht">Hypothesis testing</option>
+        <optgroup label="Core regression (Ch. 4–7)">
+          <option value="props">Properties of the estimator</option>
+          <option value="ols" selected>OLS estimation</option>
+          <option value="r2">R² goodness of fit</option>
+          <option value="ht">Hypothesis testing</option>
+        </optgroup>
+        <optgroup label="Extensions (Ch. 8–12)">
+          <option value="nl">Nonlinear regression</option>
+          <option value="panel">Panel data &amp; fixed effects</option>
+          <option value="bin">Binary dependent variable</option>
+          <option value="iv">Instrumental variables</option>
+        </optgroup>
       </select>
     </nav>
   </header>
@@ -251,9 +291,7 @@
         <option value="mean">Sample mean X̅</option>
         <option value="slope">OLS slope β̂₁</option>
       </select>
-      <span class="lbl" id="props-n-lbl" style="margin-left:6px">Sample size n</span>
-      <input type="range" id="props-n" min="5" max="200" step="1" style="flex:1;min-width:140px;accent-color:var(--indigo)">
-      <span class="val" id="props-nv">—</span>
+      <span class="sgroup" id="props-n-grp"><span class="lbl" id="props-n-lbl" style="margin-left:6px">Sample size n</span><input type="range" id="props-n" min="5" max="200" step="1" style="accent-color:var(--indigo)"><span class="val" id="props-nv">—</span></span>
       <label class="tog" id="props-bias-wrap" style="margin:0"><input type="checkbox" id="props-bias">Show a biased estimator</label>
       <button id="props-draw" class="primary">Draw more samples</button>
       <button id="props-reset">Reset</button>
@@ -298,6 +336,19 @@
     <details class="help"><summary>How to read this page</summary><p>The blue points are school districts. The purple line is your fitted regression line. A residual is the vertical distance between an observed test score and the predicted test score. OLS searches for the intercept and slope that make the total squared vertical distances as small as possible.</p></details>
 
 
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="ols-topic">
+        <option value="fit" selected>Fit the line by hand (Ch. 4)</option>
+        <option value="prfsrf">Population vs sample regression line (Ch. 4)</option>
+        <option value="algebra">Algebraic properties of the fit (Ch. 4)</option>
+        <option value="multi">Multiple regression &amp; the partial effect (Ch. 6)</option>
+        <option value="ovb">Omitted variable bias (Ch. 6–7)</option>
+        <option value="mc">Multicollinearity (Ch. 6–7)</option>
+      </select>
+    </div>
+
+    <div id="ols-classic">
     <div class="ctlrow">
       <span class="lbl">Scenario</span>
       <select class="sel" id="ols-scn">
@@ -351,6 +402,44 @@
       </div>
     </section>
     <p class="note" id="ols-soln">—</p>
+    </div><!-- /ols-classic -->
+
+    <div id="ols-more" class="hidden">
+      <div class="ctlrow">
+        <span class="lbl" id="olsx-a-lbl">Sample</span>
+        <button id="olsx-draw">Draw a new sample</button>
+        <span class="sgroup" id="olsx-tq-grp"><span class="lbl" id="olsx-tq-lbl" style="margin-left:6px">Teacher quality TQ</span><input type="range" id="olsx-tq" min="-3" max="3" step="0.1" style="accent-color:var(--teal)"><span class="val" id="olsx-tqv">—</span></span>
+        <span class="sgroup" id="olsx-rho-grp"><span class="lbl" id="olsx-rho-lbl" style="margin-left:6px">Corr(X₁, X₂)</span><input type="range" id="olsx-rho" min="0" max="0.99" step="0.01" style="accent-color:var(--coral)"><span class="val" id="olsx-rhov">—</span></span>
+        <label class="tog tealbox" id="olsx-zy-wrap" style="margin:0"><input type="checkbox" id="olsx-zy" checked>Omitted Z raises Y</label>
+        <label class="tog" id="olsx-zx-wrap" style="margin:0"><input type="checkbox" id="olsx-zx">Z moves <i>with</i> X (positively)</label>
+      </div>
+
+      <section class="card plotcard">
+        <svg id="olsx-plot" viewBox="0 0 820 430" role="img" aria-label="Diagram for the selected OLS topic.">
+          <g id="olsx-g"></g>
+        </svg>
+      </section>
+
+      <section class="grid">
+        <div class="card pad">
+          <div class="eq" id="olsx-title">—</div>
+          <div class="hint" id="olsx-desc">&nbsp;</div>
+          <div id="olsx-extra"></div>
+        </div>
+        <div class="card pad">
+          <div class="metrics">
+            <div class="metric"><div class="mlab" id="olsx-m1lab">—</div><div class="mval" style="font-size:21px" id="olsx-m1">—</div><div class="mnote" id="olsx-m1note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="olsx-m2lab">—</div><div class="mval" style="font-size:21px" id="olsx-m2">—</div><div class="mnote" id="olsx-m2note">&nbsp;</div></div>
+          </div>
+          <div class="metrics" style="margin-top:12px">
+            <div class="metric"><div class="mlab" id="olsx-m3lab">—</div><div class="mval" style="font-size:21px" id="olsx-m3">—</div><div class="mnote" id="olsx-m3note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="olsx-m4lab">—</div><div class="mval" style="font-size:21px" id="olsx-m4">—</div><div class="mnote" id="olsx-m4note">&nbsp;</div></div>
+          </div>
+          <div class="statrow" id="olsx-chips"></div>
+        </div>
+      </section>
+      <p class="note" id="olsx-note">&nbsp;</p>
+    </div>
   </section>
 
   <!-- ===================== PAGE 3 · R² ===================== -->
@@ -366,6 +455,16 @@
     <details class="help"><summary>Common mistake</summary><p>A high R² does not prove causality. It only says that the fitted line explains a larger share of the variation in the sample. Causal claims need a research design and assumptions, not only a fitted line.</p></details>
 
 
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="r2-topic">
+        <option value="decomp" selected>Variation decomposition (Ch. 4)</option>
+        <option value="ser">SER — the typical residual (Ch. 4, 6)</option>
+        <option value="adj">R² vs adjusted R² (Ch. 6)</option>
+      </select>
+    </div>
+
+    <div id="r2-classic">
     <div class="ctlrow">
       <span class="lbl">Scenario</span>
       <select class="sel" id="r2-scn">
@@ -420,6 +519,40 @@
       </div>
     </section>
     <p class="note">Same line, same data — only the spread changes. Tighter clouds leave a smaller residual (orange) share, so R² rises toward 1; a flat cloud explains nothing, so R² ≈ 0.</p>
+    </div><!-- /r2-classic -->
+
+    <div id="r2-more" class="hidden">
+      <div class="ctlrow">
+        <span class="sgroup" id="r2x-k-grp"><span class="lbl" id="r2x-k-lbl">Number of regressors K</span><input type="range" id="r2x-k" min="1" max="8" step="1" style="accent-color:var(--indigo)"><span class="val" id="r2x-kv">—</span></span>
+        <span class="sgroup" id="r2x-noise-grp"><span class="lbl" id="r2x-noise-lbl" style="margin-left:6px">Spread of the errors</span><input type="range" id="r2x-noise" min="2" max="20" step="0.5" style="accent-color:var(--coral)"><span class="val" id="r2x-noisev">—</span></span>
+      </div>
+
+      <section class="card plotcard">
+        <svg id="r2x-plot" viewBox="0 0 820 430" role="img" aria-label="Diagram for the selected goodness-of-fit topic.">
+          <g id="r2x-g"></g>
+        </svg>
+      </section>
+
+      <section class="grid">
+        <div class="card pad">
+          <div class="eq" id="r2x-title">—</div>
+          <div class="hint" id="r2x-desc">&nbsp;</div>
+          <div id="r2x-extra"></div>
+        </div>
+        <div class="card pad">
+          <div class="metrics">
+            <div class="metric"><div class="mlab" id="r2x-m1lab">—</div><div class="mval" style="font-size:21px" id="r2x-m1">—</div><div class="mnote" id="r2x-m1note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="r2x-m2lab">—</div><div class="mval" style="font-size:21px" id="r2x-m2">—</div><div class="mnote" id="r2x-m2note">&nbsp;</div></div>
+          </div>
+          <div class="metrics" style="margin-top:12px">
+            <div class="metric"><div class="mlab" id="r2x-m3lab">—</div><div class="mval" style="font-size:21px" id="r2x-m3">—</div><div class="mnote" id="r2x-m3note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="r2x-m4lab">—</div><div class="mval" style="font-size:21px" id="r2x-m4">—</div><div class="mnote" id="r2x-m4note">&nbsp;</div></div>
+          </div>
+          <div class="statrow" id="r2x-chips"></div>
+        </div>
+      </section>
+      <p class="note" id="r2x-note">&nbsp;</p>
+    </div>
   </section>
 
   <!-- ===================== PAGE 4 · HYPOTHESIS TESTING ===================== -->
@@ -436,15 +569,26 @@
 
 
     <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="ht-topic">
+        <option value="ttest" selected>t-test for one coefficient (Ch. 5)</option>
+        <option value="sided">One-sided vs two-sided (Ch. 5)</option>
+        <option value="ci">Confidence intervals (Ch. 5, 7)</option>
+        <option value="ftest">Joint hypotheses and the F-test (Ch. 7)</option>
+        <option value="ellipse">Confidence set: ellipse vs rectangle (Ch. 7)</option>
+        <option value="het">Heteroskedasticity and robust SEs (Ch. 5)</option>
+      </select>
+    </div>
+
+    <div id="ht-classic">
+    <div class="ctlrow">
       <span class="lbl">Significance level α</span>
       <select class="sel" id="ht-alpha">
         <option value="0.10">10%</option>
         <option value="0.05" selected>5%</option>
         <option value="0.01">1%</option>
       </select>
-      <span class="lbl" style="margin-left:6px">Sample size n</span>
-      <input type="range" id="ht-n" min="8" max="200" step="1" style="flex:1;min-width:150px;accent-color:var(--indigo)">
-      <span class="val" id="ht-nv">—</span>
+      <span class="sgroup" id="ht-n-grp"><span class="lbl" style="margin-left:6px">Sample size n</span><input type="range" id="ht-n" min="8" max="200" step="1" style="accent-color:var(--indigo)"><span class="val" id="ht-nv">—</span></span>
       <button id="ht-new">Draw new sample</button>
     </div>
 
@@ -507,12 +651,290 @@
       </div>
     </section>
     <p class="note">As n grows the standard error shrinks, so |t| grows and even a fixed slope eventually becomes significant — a reminder that “statistically significant” is not the same as “large.”</p>
+    </div><!-- /ht-classic -->
+
+    <div id="ht-more" class="hidden">
+      <div class="ctlrow">
+        <span class="lbl" id="htx-a-lbl">Significance level α</span>
+        <select class="sel" id="htx-alpha">
+          <option value="0.10">10%</option>
+          <option value="0.05" selected>5%</option>
+          <option value="0.01">1%</option>
+        </select>
+        <span class="sgroup" id="htx-t-grp"><span class="lbl" id="htx-t-lbl" style="margin-left:6px">Observed t</span><input type="range" id="htx-t" min="-4" max="4" step="0.05" style="accent-color:var(--indigo)"><span class="val" id="htx-tv">—</span></span>
+        <span class="sgroup" id="htx-f-grp"><span class="lbl" id="htx-f-lbl" style="margin-left:6px">Observed F</span><input type="range" id="htx-f" min="0" max="10" step="0.01" style="accent-color:var(--indigo)"><span class="val" id="htx-fv">—</span></span>
+        <span class="sgroup" id="htx-rho-grp"><span class="lbl" id="htx-rho-lbl" style="margin-left:6px">Corr(<span class="sym-hat">β</span><sub>1</sub>, <span class="sym-hat">β</span><sub>2</sub>)</span><input type="range" id="htx-rho" min="-0.95" max="0.95" step="0.05" style="accent-color:var(--coral)"><span class="val" id="htx-rhov">—</span></span>
+        <span class="sgroup" id="htx-het-grp"><span class="lbl" id="htx-het-lbl" style="margin-left:6px">Heteroskedasticity</span><input type="range" id="htx-het" min="0" max="1" step="0.02" style="accent-color:var(--coral)"><span class="val" id="htx-hetv">—</span></span>
+      </div>
+
+      <section class="card plotcard">
+        <svg id="htx-plot" viewBox="0 0 820 430" role="img" aria-label="Diagram for the selected hypothesis-testing topic.">
+          <g id="htx-g"></g>
+        </svg>
+      </section>
+
+      <section class="grid">
+        <div class="card pad">
+          <div class="eq" id="htx-title">—</div>
+          <div class="hint" id="htx-desc">&nbsp;</div>
+          <div id="htx-extra"></div>
+        </div>
+        <div class="card pad">
+          <div class="metrics">
+            <div class="metric"><div class="mlab" id="htx-m1lab">—</div><div class="mval" style="font-size:21px" id="htx-m1">—</div><div class="mnote" id="htx-m1note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="htx-m2lab">—</div><div class="mval" style="font-size:21px" id="htx-m2">—</div><div class="mnote" id="htx-m2note">&nbsp;</div></div>
+          </div>
+          <div class="metrics" style="margin-top:12px">
+            <div class="metric"><div class="mlab" id="htx-m3lab">—</div><div class="mval" style="font-size:21px" id="htx-m3">—</div><div class="mnote" id="htx-m3note">&nbsp;</div></div>
+            <div class="metric"><div class="mlab" id="htx-m4lab">—</div><div class="mval" style="font-size:21px" id="htx-m4">—</div><div class="mnote" id="htx-m4note">&nbsp;</div></div>
+          </div>
+          <div class="statrow" id="htx-chips"></div>
+        </div>
+      </section>
+      <p class="note" id="htx-note">&nbsp;</p>
+    </div>
   </section>
 
 
 
+  <!-- ===================== CH. 8 · NONLINEAR REGRESSION ===================== -->
+  <section class="page" id="page-nl">
+    <p class="lead">So far the slope has been a single number: one extra unit of <i>X</i> moves <i>Y</i> by <span class="sym-hat">β</span><sub>1</sub>,
+      no matter where you start. That fails in two ways — when the effect of <i>X</i> <b>depends on the level of <i>X</i></b>,
+      and when it <b>depends on another regressor</b>. The fix keeps OLS: the model stays <b>linear in the parameters</b>
+      while becoming nonlinear in the variables.</p>
+
+    <div class="lesson-box">
+      <div class="lesson"><strong>Learning goal</strong><span>Read a slope that changes — and always report an effect together with the point where it was evaluated.</span></div>
+      <div class="lesson"><strong>Try this</strong><span>On the quadratic, move income from 10 to 40 and watch one model deliver two very different slopes.</span></div>
+    </div>
+    <details class="help"><summary>Why OLS still works here</summary><p>A quadratic looks nonlinear, but writing X<sub>1</sub> = Income and X<sub>2</sub> = Income² turns it into an ordinary two-regressor multiple regression — linear in β₀, β₁, β₂, so OLS applies unchanged. This is not perfect multicollinearity either: perfect collinearity needs an exact <em>linear</em> relation between the regressors, and Income² is exact but nonlinear. Contrast Y = β₀X^β₁ + u, which is nonlinear in the parameters and cannot be estimated by OLS at all.</p></details>
+
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="nl-scn">
+        <option value="why">Why nonlinear? A slope that changes</option>
+        <option value="quad" selected>The quadratic model</option>
+        <option value="poly">Polynomial degree</option>
+        <option value="logs">Logarithms</option>
+        <option value="inter">Interactions</option>
+        <option value="merr">Measurement error</option>
+      </select>
+
+      <span class="sgroup" id="nl-x-grp"><span class="lbl" id="nl-x-lbl" style="margin-left:6px">Evaluate at income</span><input type="range" id="nl-x" min="5" max="50" step="0.5" style="accent-color:var(--indigo)"><span class="val" id="nl-xv">—</span></span>
+
+      <span class="sgroup" id="nl-deg-grp"><span class="lbl" id="nl-deg-lbl" style="margin-left:6px">Degree r</span><input type="range" id="nl-deg" min="1" max="5" step="1" style="accent-color:var(--indigo)"><span class="val" id="nl-degv">—</span></span>
+
+      <select class="sel" id="nl-polydata">
+        <option value="quad" selected>Data: quadratic (as in the notes)</option>
+        <option value="cubic">Data: cubic, with an inflection point</option>
+        <option value="wave">Data: wavy (needs a quartic)</option>
+      </select>
+
+      <select class="sel" id="nl-logtype">
+        <option value="linlog">Linear-log: Y on ln(X)</option>
+        <option value="loglin">Log-linear: ln(Y) on X</option>
+        <option value="loglog">Log-log: ln(Y) on ln(X)</option>
+      </select>
+
+      <select class="sel" id="nl-intertype">
+        <option value="bb">Binary × binary</option>
+        <option value="cb" selected>Continuous × binary</option>
+        <option value="cc">Continuous × continuous</option>
+      </select>
+      <span class="sgroup" id="nl-b3-grp"><span class="lbl" id="nl-b3-lbl" style="margin-left:6px">Interaction <span class="sym-hat">β</span><sub>3</sub></span><input type="range" id="nl-b3" min="-1.2" max="1.2" step="0.05" style="accent-color:var(--coral)"><span class="val" id="nl-b3v">—</span></span>
+
+      <span class="sgroup" id="nl-me-grp"><span class="lbl" id="nl-me-lbl" style="margin-left:6px">Noise in X (σ²<sub>w</sub>)</span><input type="range" id="nl-me" min="0" max="60" step="1" style="accent-color:var(--coral)"><span class="val" id="nl-mev">—</span></span>
+
+      <label class="tog" id="nl-lin-wrap" style="margin:0"><input type="checkbox" id="nl-lin" checked>Compare with the straight line</label>
+    </div>
+
+    <section class="card plotcard">
+      <svg id="nl-plot" viewBox="0 0 820 430" role="img" aria-label="Nonlinear regression diagram for the selected topic.">
+        <g id="nl-g"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="eq" id="nl-title">—</div>
+        <div class="hint" id="nl-desc">&nbsp;</div>
+        <div id="nl-extra"></div>
+      </div>
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric"><div class="mlab" id="nl-m1lab">—</div><div class="mval" style="font-size:21px" id="nl-m1">—</div><div class="mnote" id="nl-m1note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="nl-m2lab">—</div><div class="mval" style="font-size:21px" id="nl-m2">—</div><div class="mnote" id="nl-m2note">&nbsp;</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab" id="nl-m3lab">—</div><div class="mval" style="font-size:21px" id="nl-m3">—</div><div class="mnote" id="nl-m3note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="nl-m4lab">—</div><div class="mval" style="font-size:21px" id="nl-m4">—</div><div class="mnote" id="nl-m4note">&nbsp;</div></div>
+        </div>
+        <div class="statrow" id="nl-chips"></div>
+      </div>
+    </section>
+    <p class="note" id="nl-note">&nbsp;</p>
+  </section>
+
+  <!-- ===================== CH. 10 · PANEL DATA ===================== -->
+  <section class="page" id="page-panel">
+    <p class="lead">Panel data follows the <b>same entities over time</b>. That repetition is what lets us delete an omitted
+      variable we cannot even measure: anything that differs across states but stays <b>fixed over time</b> — a culture of
+      drinking and driving, say — can be differenced or demeaned away, without ever observing it.</p>
+
+    <div class="lesson-box">
+      <div class="lesson"><strong>Learning goal</strong><span>See how within-entity variation identifies an effect that the cross-section gets backwards.</span></div>
+      <div class="lesson"><strong>Try this</strong><span>Start on the cross-section — the slope is positive. Then switch to fixed effects and watch the sign flip.</span></div>
+    </div>
+    <details class="help"><summary>What fixed effects can and cannot remove</summary><p>Entity fixed effects absorb anything constant within a state, however unobservable. Time fixed effects absorb anything common to all states in a given year — a national tariff, a federal campaign. Together they handle omitted variables that vary across entities <em>or</em> across time. What they cannot touch is an omitted variable that varies across <em>both</em> at once; that is the problem instrumental variables are for.</p></details>
+
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="pn-scn">
+        <option value="cross" selected>The cross-section trap</option>
+        <option value="diff">Before and after (T = 2)</option>
+        <option value="fe">Entity fixed effects</option>
+        <option value="time">Time fixed effects</option>
+      </select>
+      <span class="sgroup" id="pn-conf-grp"><span class="lbl" id="pn-conf-lbl" style="margin-left:6px">Strength of the state effect</span><input type="range" id="pn-conf" min="0" max="1.5" step="0.05" style="accent-color:var(--coral)"><span class="val" id="pn-confv">—</span></span>
+      <label class="tog tealbox" id="pn-dm-wrap" style="margin:0"><input type="checkbox" id="pn-dm">Show entity-demeaned data</label>
+    </div>
+
+    <section class="card plotcard">
+      <svg id="pn-plot" viewBox="0 0 820 430" role="img" aria-label="Panel data diagram for the selected topic.">
+        <g id="pn-g"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="eq" id="pn-title">—</div>
+        <div class="hint" id="pn-desc">&nbsp;</div>
+        <div id="pn-extra"></div>
+      </div>
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric"><div class="mlab" id="pn-m1lab">—</div><div class="mval" style="font-size:21px" id="pn-m1">—</div><div class="mnote" id="pn-m1note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="pn-m2lab">—</div><div class="mval" style="font-size:21px" id="pn-m2">—</div><div class="mnote" id="pn-m2note">&nbsp;</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab" id="pn-m3lab">—</div><div class="mval" style="font-size:21px" id="pn-m3">—</div><div class="mnote" id="pn-m3note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="pn-m4lab">—</div><div class="mval" style="font-size:21px" id="pn-m4">—</div><div class="mnote" id="pn-m4note">&nbsp;</div></div>
+        </div>
+        <div class="statrow" id="pn-chips"></div>
+      </div>
+    </section>
+    <p class="note" id="pn-note">&nbsp;</p>
+  </section>
+
+  <!-- ===================== CH. 11 · BINARY DEPENDENT VARIABLE ===================== -->
+  <section class="page" id="page-bin">
+    <p class="lead">When <i>Y</i> is 0 or 1, the regression function becomes a <b>probability</b>:
+      E(<i>Y</i> | <i>X</i>) = Pr(<i>Y</i> = 1 | <i>X</i>). A straight line will happily predict a probability of 1.3 or −0.2,
+      so we run the index β₀ + β₁<i>X</i> through a <b>cumulative distribution function</b> instead — the normal CDF for
+      probit, the logistic CDF for logit.</p>
+
+    <div class="lesson-box">
+      <div class="lesson"><strong>Learning goal</strong><span>See why a probability model needs an S-curve, and why its marginal effect is not one number.</span></div>
+      <div class="lesson"><strong>Try this</strong><span>On the LPM, push β₁ up until the fitted line leaves the 0–1 band at both ends.</span></div>
+    </div>
+    <details class="help"><summary>Why not just use OLS?</summary><p>Two reasons. The fitted line is unbounded, so predicted probabilities can fall outside [0, 1] — a meaningless answer. And the error is heteroskedastic by construction: for a 0/1 outcome Var(Y) = P(1 − P), which depends on X through P and so can never be constant. Probit and logit fix the first problem by construction; because they are nonlinear in the parameters, they are estimated by maximum likelihood rather than OLS.</p></details>
+
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="bn-scn">
+        <option value="lpm" selected>The linear probability model</option>
+        <option value="curve">Probit and logit S-curves</option>
+        <option value="me">Marginal effects</option>
+        <option value="mle">Latent variable &amp; maximum likelihood</option>
+      </select>
+      <span class="sgroup" id="bn-b0-grp"><span class="lbl" id="bn-b0-lbl" style="margin-left:6px"><span class="sym-hat">β</span><sub>0</sub></span><input type="range" id="bn-b0" min="-4" max="2" step="0.1" style="accent-color:var(--indigo)"><span class="val" id="bn-b0v">—</span></span>
+      <span class="sgroup" id="bn-b1-grp"><span class="lbl" id="bn-b1-lbl" style="margin-left:6px"><span class="sym-hat">β</span><sub>1</sub></span><input type="range" id="bn-b1" min="0.05" max="1.5" step="0.05" style="accent-color:var(--indigo)"><span class="val" id="bn-b1v">—</span></span>
+      <span class="sgroup" id="bn-x-grp"><span class="lbl" id="bn-x-lbl" style="margin-left:6px">Evaluate at X</span><input type="range" id="bn-x" min="0" max="10" step="0.1" style="accent-color:var(--coral)"><span class="val" id="bn-xv">—</span></span>
+    </div>
+
+    <section class="card plotcard">
+      <svg id="bn-plot" viewBox="0 0 820 430" role="img" aria-label="Binary dependent variable diagram for the selected topic.">
+        <g id="bn-g"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="eq" id="bn-title">—</div>
+        <div class="hint" id="bn-desc">&nbsp;</div>
+        <div id="bn-extra"></div>
+      </div>
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric"><div class="mlab" id="bn-m1lab">—</div><div class="mval" style="font-size:21px" id="bn-m1">—</div><div class="mnote" id="bn-m1note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="bn-m2lab">—</div><div class="mval" style="font-size:21px" id="bn-m2">—</div><div class="mnote" id="bn-m2note">&nbsp;</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab" id="bn-m3lab">—</div><div class="mval" style="font-size:21px" id="bn-m3">—</div><div class="mnote" id="bn-m3note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="bn-m4lab">—</div><div class="mval" style="font-size:21px" id="bn-m4">—</div><div class="mnote" id="bn-m4note">&nbsp;</div></div>
+        </div>
+        <div class="statrow" id="bn-chips"></div>
+      </div>
+    </section>
+    <p class="note" id="bn-note">&nbsp;</p>
+  </section>
+
+  <!-- ===================== CH. 12 · INSTRUMENTAL VARIABLES ===================== -->
+  <section class="page" id="page-iv">
+    <p class="lead">When the regressor is <b>endogenous</b> — correlated with the error — OLS is biased and no amount of data
+      repairs it. If the omitted factor cannot be measured and does not sit still over time, fixed effects cannot help either.
+      Instrumental variables take the part of <i>X</i> that is driven by something <b>unrelated to the error</b>, and use only
+      that part to explain <i>Y</i>.</p>
+
+    <div class="lesson-box">
+      <div class="lesson"><strong>Learning goal</strong><span>Understand the two conditions an instrument must satisfy, and the price paid for using one.</span></div>
+      <div class="lesson"><strong>Try this</strong><span>Weaken the instrument and watch the IV estimate stay centred but scatter wildly.</span></div>
+    </div>
+    <details class="help"><summary>The two conditions, in plain words</summary><p><b>Relevance:</b> Corr(Z, X) ≠ 0 — the instrument actually moves the regressor, otherwise there is nothing to work with. <b>Exogeneity:</b> Corr(Z, u) = 0 — the instrument reaches Y <em>only</em> through X, with no direct path of its own. Relevance is testable from the first stage; exogeneity is an assumption you must defend with economics, because the error is never observed.</p></details>
+
+    <div class="ctlrow">
+      <span class="lbl">Topic</span>
+      <select class="sel" id="iv-scn">
+        <option value="endog" selected>The endogeneity problem</option>
+        <option value="valid">What makes an instrument valid</option>
+        <option value="tsls">Two-stage least squares</option>
+        <option value="weak">The price: precision &amp; weak instruments</option>
+      </select>
+      <span class="sgroup" id="iv-e-grp"><span class="lbl" id="iv-e-lbl" style="margin-left:6px">Endogeneity Corr(X, u)</span><input type="range" id="iv-e" min="0" max="0.8" step="0.02" style="accent-color:var(--coral)"><span class="val" id="iv-ev">—</span></span>
+      <span class="sgroup" id="iv-s-grp"><span class="lbl" id="iv-s-lbl" style="margin-left:6px">Instrument strength</span><input type="range" id="iv-s" min="0.05" max="1" step="0.01" style="accent-color:var(--teal)"><span class="val" id="iv-sv">—</span></span>
+    </div>
+
+    <section class="card plotcard">
+      <svg id="iv-plot" viewBox="0 0 820 430" role="img" aria-label="Instrumental variables diagram for the selected topic.">
+        <g id="iv-g"></g>
+      </svg>
+    </section>
+
+    <section class="grid">
+      <div class="card pad">
+        <div class="eq" id="iv-title">—</div>
+        <div class="hint" id="iv-desc">&nbsp;</div>
+        <div id="iv-extra"></div>
+      </div>
+      <div class="card pad">
+        <div class="metrics">
+          <div class="metric"><div class="mlab" id="iv-m1lab">—</div><div class="mval" style="font-size:21px" id="iv-m1">—</div><div class="mnote" id="iv-m1note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="iv-m2lab">—</div><div class="mval" style="font-size:21px" id="iv-m2">—</div><div class="mnote" id="iv-m2note">&nbsp;</div></div>
+        </div>
+        <div class="metrics" style="margin-top:12px">
+          <div class="metric"><div class="mlab" id="iv-m3lab">—</div><div class="mval" style="font-size:21px" id="iv-m3">—</div><div class="mnote" id="iv-m3note">&nbsp;</div></div>
+          <div class="metric"><div class="mlab" id="iv-m4lab">—</div><div class="mval" style="font-size:21px" id="iv-m4">—</div><div class="mnote" id="iv-m4note">&nbsp;</div></div>
+        </div>
+        <div class="statrow" id="iv-chips"></div>
+      </div>
+    </section>
+    <p class="note" id="iv-note">&nbsp;</p>
+  </section>
+
   <footer>
     <p style="margin:0 0 6px">Data: simulated districts with STR ~ Normal(19.6, 2.3) and Test score = β₀ + β₁·STR + noise, so the data-generating process is known and every quantity can be seen exactly. Each scenario uses a fixed seed, so the picture is identical on every load.</p>
+    <p style="margin:0 0 6px">The Ch. 8 quadratic reproduces the published estimates from the lecture notes. The panel-data, binary-outcome and instrumental-variables sections use simulated data calibrated to reproduce the qualitative result described in the notes, since those chapters state their structure without reporting estimates.</p>
     <p style="margin:0">Tests use homoskedastic standard errors and the exact t-distribution with n − 2 degrees of freedom, which approaches the standard normal as n grows.</p>
     <p style="margin:10px 0 0;font-size:11px;color:var(--faint)">Created and developed by: <a href="https://smasifehsan.github.io/SMAsifEhsan/#about" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:underline">S. M. Asif Ehsan</a>, Ph.D., Department of Economics, North South University</p>
   </footer>
@@ -535,6 +957,28 @@
   function tPdf(t,v){return Math.exp(lgamma((v+1)/2)-lgamma(v/2))/Math.sqrt(v*Math.PI)*Math.pow(1+t*t/v,-(v+1)/2);}
   function tSF2(t,v){var x=v/(v+t*t);return betai(v/2,0.5,x);}
   function tCrit(alpha,v){var lo=0,hi=1000;for(var i=0;i<80;i++){var mid=(lo+hi)/2;if(tSF2(mid,v)>alpha)lo=mid;else hi=mid;}return (lo+hi)/2;}
+  /* F distribution (built on the regularized incomplete beta above) */
+  function fCdf(F,q,d){if(F<=0)return 0;return betai(q/2,d/2,q*F/(q*F+d));}
+  function fSF(F,q,d){return 1-fCdf(F,q,d);}
+  function fCrit(alpha,q,d){var lo=0,hi=1000;for(var i=0;i<90;i++){var mid=(lo+hi)/2;if(fSF(mid,q,d)>alpha)lo=mid;else hi=mid;}return (lo+hi)/2;}
+  function fPdf(F,q,d){if(F<=0)return 0;var a=q/2,b=d/2;
+    var lnc=a*Math.log(q/d)+(a-1)*Math.log(F)-(a+b)*Math.log(1+q*F/d)-(lgamma(a)+lgamma(b)-lgamma(a+b));
+    return Math.exp(lnc);}
+  /* Regularized lower incomplete gamma -> chi-square CDF (for Breusch-Pagan) */
+  function gammaP(a,x){
+    if(x<=0)return 0;
+    if(x<a+1){var ap=a,sum=1/a,del=sum;for(var i=0;i<500;i++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-14)break;}
+      return sum*Math.exp(-x+a*Math.log(x)-lgamma(a));}
+    var FPMIN=1e-300,b=x+1-a,c=1/FPMIN,d=1/b,h=d;
+    for(var j=1;j<=500;j++){var an=-j*(j-a);b+=2;d=an*d+b;if(Math.abs(d)<FPMIN)d=FPMIN;c=b+an/c;if(Math.abs(c)<FPMIN)c=FPMIN;d=1/d;var dl=d*c;h*=dl;if(Math.abs(dl-1)<1e-14)break;}
+    return 1-Math.exp(-x+a*Math.log(x)-lgamma(a))*h;
+  }
+  function chiCdf(x,k){return gammaP(k/2,x/2);}
+  function chiSF(x,k){return 1-chiCdf(x,k);}
+  function chiCrit(alpha,k){var lo=0,hi=1000;for(var i=0;i<90;i++){var mid=(lo+hi)/2;if(chiSF(mid,k)>alpha)lo=mid;else hi=mid;}return (lo+hi)/2;}
+  function chiPdf(x,k){if(x<=0)return 0;return Math.exp((k/2-1)*Math.log(x)-x/2-lgamma(k/2)-(k/2)*Math.LN2);}
+  function logistic(z){return 1/(1+Math.exp(-z));}
+  function normPdf(x,mu,sd){return Math.exp(-((x-mu)*(x-mu))/(2*sd*sd))/(sd*Math.sqrt(2*Math.PI));}
 
   function generate(o){
     var rng=mulberry32(o.seed),randn=normalGen(rng),pts=[];
@@ -582,15 +1026,67 @@
     o.push('<text transform="translate(18,'+(pc.m.t+pc.ih/2)+') rotate(-90)" text-anchor="middle" style="fill:var(--ink);font-size:13.5px">'+yLabel+'</text>');
     return o.join('');
   }
+  /* ---------- shared density / histogram drawing helpers ---------- */
+  function curvePath(pc,mu,sd,lo,hi){var s=[],first=true,x,step=(hi-lo)/240;for(x=lo;x<=hi+1e-9;x+=step){s.push((first?'M':'L')+pc.x(x).toFixed(1)+','+pc.y(normPdf(x,mu,sd)).toFixed(1));first=false;}return s.join('');}
+  /* generic curve of an arbitrary f(x) */
+  function fnPath(pc,f,lo,hi,steps){var s=[],first=true,i,N=steps||240,x;for(i=0;i<=N;i++){x=lo+(hi-lo)*i/N;var y=f(x);if(!isFinite(y)){first=true;continue;}s.push((first?'M':'L')+pc.x(x).toFixed(1)+','+pc.y(y).toFixed(1));first=false;}return s.join('');}
+  /* filled area under f(x) between lo and hi, down to y=0 */
+  function areaPath(pc,f,lo,hi,steps){var s=['M'+pc.x(lo).toFixed(1)+','+pc.y(0).toFixed(1)],i,N=steps||160,x;for(i=0;i<=N;i++){x=lo+(hi-lo)*i/N;s.push('L'+pc.x(x).toFixed(1)+','+pc.y(f(x)).toFixed(1));}s.push('L'+pc.x(hi).toFixed(1)+','+pc.y(0).toFixed(1)+'Z');return s.join('');}
+  function axis(pc,lo,hi,xlab,fmtFn){
+    var s=[],i,xt,f=fmtFn||function(v){return (Math.round(v*100)/100);};
+    s.push('<line x1="'+pc.x(lo)+'" y1="'+pc.y(0)+'" x2="'+pc.x(hi)+'" y2="'+pc.y(0)+'" style="stroke:var(--axis);stroke-width:1.5"/>');
+    for(i=0;i<=6;i++){xt=lo+(hi-lo)*i/6;
+      s.push('<line x1="'+pc.x(xt)+'" y1="'+pc.y(0)+'" x2="'+pc.x(xt)+'" y2="'+(pc.y(0)+5)+'" style="stroke:var(--axis);stroke-width:1"/>');
+      s.push('<text x="'+pc.x(xt)+'" y="'+(pc.y(0)+20)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+f(xt)+'</text>');}
+    s.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.h-8)+'" text-anchor="middle" style="fill:var(--ink);font-size:13px">'+xlab+'</text>');
+    return s.join('');
+  }
+  function bars(pc,d,lo,binW,fill,op){var s=[],k,y0=pc.y(0);for(k=0;k<d.length;k++){if(d[k]<=0)continue;var x0=pc.x(lo+k*binW),x1=pc.x(lo+(k+1)*binW),yt=pc.y(d[k]);s.push('<rect x="'+x0.toFixed(1)+'" y="'+yt.toFixed(1)+'" width="'+Math.max(0.5,x1-x0-0.6).toFixed(1)+'" height="'+(y0-yt).toFixed(1)+'" style="fill:'+fill+';stroke:'+fill+'" fill-opacity="'+op+'" stroke-opacity=".70" stroke-width=".7"/>');}return s.join('');}
+  function vline(pc,x,col,dash,label,ly){var ypos=(ly!=null)?ly:(pc.m.t-5);var s='<line x1="'+pc.x(x)+'" y1="'+pc.y(0)+'" x2="'+pc.x(x)+'" y2="'+pc.m.t+'" style="stroke:'+col+';stroke-width:2.4"'+(dash?' stroke-dasharray="5 4"':'')+'/>';if(label)s+='<text x="'+pc.x(x)+'" y="'+ypos+'" text-anchor="middle" style="fill:'+col+';font-size:11.5px;font-weight:700">'+label+'</text>';return s;}
+  function plotLegend(pc,items,x0,y0){
+    var s=[],x=(x0!=null?x0:pc.m.l+8),y=(y0!=null?y0:28);
+    items.forEach(function(it,idx){
+      var yy=y+idx*18;
+      s.push('<rect x="'+x+'" y="'+(yy-10)+'" width="14" height="10" rx="2" style="fill:'+it.color+';stroke:'+it.color+'" fill-opacity=".58" stroke-opacity=".85"/>');
+      s.push('<text x="'+(x+21)+'" y="'+yy+'" style="fill:'+it.color+';font-size:12.2px;font-weight:800">'+it.label+'</text>');
+    });
+    return s.join('');
+  }
+  /* histogram density counts over [lo,hi] in nb bins */
+  function densOf(arr,lo,hi,nb){var c=[],k,binW=(hi-lo)/nb;for(k=0;k<nb;k++)c.push(0);for(k=0;k<arr.length;k++){var b=Math.floor((arr[k]-lo)/binW);if(b>=0&&b<nb)c[b]++;}if(arr.length)for(k=0;k<nb;k++)c[k]=c[k]/(arr.length*binW);return c;}
+  /* mean / sd of an array */
+  function statOf(arr){var n=arr.length,s=0,i;if(!n)return {mean:0,sd:0,n:0};for(i=0;i<n;i++)s+=arr[i];var mu=s/n,v=0;for(i=0;i<n;i++)v+=(arr[i]-mu)*(arr[i]-mu);return {mean:mu,sd:Math.sqrt(v/Math.max(1,n-1)),n:n};}
+  /* OLS with two regressors: returns b0,b1,b2 plus fit stats */
+  function ols2(x1,x2,y){
+    var n=y.length,i,s1=0,s2=0,sy=0;
+    for(i=0;i<n;i++){s1+=x1[i];s2+=x2[i];sy+=y[i];}
+    var m1=s1/n,m2=s2/n,my=sy/n,S11=0,S22=0,S12=0,S1y=0,S2y=0,Syy=0;
+    for(i=0;i<n;i++){var d1=x1[i]-m1,d2=x2[i]-m2,dy=y[i]-my;S11+=d1*d1;S22+=d2*d2;S12+=d1*d2;S1y+=d1*dy;S2y+=d2*dy;Syy+=dy*dy;}
+    var det=S11*S22-S12*S12;
+    if(Math.abs(det)<1e-12)return null;
+    var b1=(S22*S1y-S12*S2y)/det,b2=(S11*S2y-S12*S1y)/det,b0=my-b1*m1-b2*m2;
+    var RSS=0;for(i=0;i<n;i++){var e=y[i]-(b0+b1*x1[i]+b2*x2[i]);RSS+=e*e;}
+    var TSS=Syy,K=2,df=n-(K+1),s2e=RSS/df;
+    var se1=Math.sqrt(s2e*S22/det),se2=Math.sqrt(s2e*S11/det);
+    var R2=1-RSS/TSS,R2adj=1-(RSS/df)/(TSS/(n-1));
+    return {b0:b0,b1:b1,b2:b2,RSS:RSS,TSS:TSS,ESS:TSS-RSS,R2:R2,R2adj:R2adj,df:df,
+            SER:Math.sqrt(s2e),se1:se1,se2:se2,t1:b1/se1,t2:b2/se2,n:n};
+  }
   var el=function(id){return document.getElementById(id);};
   var COMMON={n:100,xMean:19.6,xSd:2.3,xLo:14,xHi:26};
+  /* show/hide per-mode control rows via the existing .hidden class */
+  function showIf(id,cond){var e=el(id);if(e)e.classList.toggle('hidden',!cond);}
+  function setTxt(id,txt){var e=el(id);if(e)e.textContent=txt;}
+  function setHTML(id,h){var e=el(id);if(e)e.innerHTML=h;}
+  function sgn(v){return v>0?'+':(v<0?'−':'');}
 
   /* ---------- section dropdown navigation ---------- */
-  var pages={props:el('page-props'),ols:el('page-ols'),r2:el('page-r2'),ht:el('page-ht')};
+  var pages={props:el('page-props'),ols:el('page-ols'),r2:el('page-r2'),ht:el('page-ht'),
+             nl:el('page-nl'),panel:el('page-panel'),bin:el('page-bin'),iv:el('page-iv')};
   var sectionPicker=el('section-picker');
   function showPage(page){
     if(!pages[page]) return;
-    for(var k in pages) pages[k].classList.toggle('active',k===page);
+    for(var k in pages) if(pages[k]) pages[k].classList.toggle('active',k===page);
     if(sectionPicker && sectionPicker.value!==page) sectionPicker.value=page;
   }
   if(sectionPicker){
@@ -869,7 +1365,6 @@
     var mode='unbiased',est='mean',rng,randn,samples=[];
     var BASE_SEED=99, INIT=1200;
 
-    function normPdf(x,mu,sd){return Math.exp(-((x-mu)*(x-mu))/(2*sd*sd))/(sd*Math.sqrt(2*Math.PI));}
     function meanOf(a){var s=0,i;for(i=0;i<a.length;i++)s+=a[i];return s/a.length;}
     function medianOf(a){var b=a.slice().sort(function(x,y){return x-y;}),k=b.length;return k%2?b[(k-1)/2]:(b[k/2-1]+b[k/2])/2;}
     function lowerHalfMean(a){var b=a.slice().sort(function(x,y){return x-y;});return meanOf(b.slice(0,Math.ceil(b.length/2)));}
@@ -895,18 +1390,6 @@
     function fmtVal(v){return mode==='clt'?v.toFixed(3):(est==='mean'?v.toFixed(1):v.toFixed(2));}
     function fmtSD(v){return mode==='clt'?v.toFixed(3):(est==='mean'?v.toFixed(2):v.toFixed(3));}
 
-    function curvePath(pc,mu,sd,lo,hi){var s=[],first=true,x,step=(hi-lo)/240;for(x=lo;x<=hi+1e-9;x+=step){s.push((first?'M':'L')+pc.x(x).toFixed(1)+','+pc.y(normPdf(x,mu,sd)).toFixed(1));first=false;}return s.join('');}
-    function axis(pc,lo,hi,xlab){
-      var s=[],i,xt;
-      s.push('<line x1="'+pc.x(lo)+'" y1="'+pc.y(0)+'" x2="'+pc.x(hi)+'" y2="'+pc.y(0)+'" style="stroke:var(--axis);stroke-width:1.5"/>');
-      for(i=0;i<=6;i++){xt=lo+(hi-lo)*i/6;
-        s.push('<line x1="'+pc.x(xt)+'" y1="'+pc.y(0)+'" x2="'+pc.x(xt)+'" y2="'+(pc.y(0)+5)+'" style="stroke:var(--axis);stroke-width:1"/>');
-        s.push('<text x="'+pc.x(xt)+'" y="'+(pc.y(0)+20)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+fmtVal(xt)+'</text>');}
-      s.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.h-8)+'" text-anchor="middle" style="fill:var(--ink);font-size:13px">'+xlab+'</text>');
-      return s.join('');
-    }
-    function bars(pc,d,lo,binW,fill,op){var s=[],k,y0=pc.y(0);for(k=0;k<d.length;k++){if(d[k]<=0)continue;var x0=pc.x(lo+k*binW),x1=pc.x(lo+(k+1)*binW),yt=pc.y(d[k]);s.push('<rect x="'+x0.toFixed(1)+'" y="'+yt.toFixed(1)+'" width="'+Math.max(0.5,x1-x0-0.6).toFixed(1)+'" height="'+(y0-yt).toFixed(1)+'" style="fill:'+fill+';stroke:'+fill+'" fill-opacity="'+op+'" stroke-opacity=".70" stroke-width=".7"/>');}return s.join('');}
-    function vline(pc,x,col,dash,label,ly){var ypos=(ly!=null)?ly:(pc.m.t-5);var s='<line x1="'+pc.x(x)+'" y1="'+pc.y(0)+'" x2="'+pc.x(x)+'" y2="'+pc.m.t+'" style="stroke:'+col+';stroke-width:2.4"'+(dash?' stroke-dasharray="5 4"':'')+'/>';if(label)s+='<text x="'+pc.x(x)+'" y="'+ypos+'" text-anchor="middle" style="fill:'+col+';font-size:11.5px;font-weight:700">'+label+'</text>';return s;}
     function estimatorStyles(){
       if(mode==='efficiency'){
         return est==='mean'
@@ -919,16 +1402,6 @@
           :{a:{color:'var(--indigo)',label:'Unbiased estimator: OLS β̂₁'},b:{color:'var(--coral)',label:'Biased estimator: noisy-x slope'}};
       }
       return {a:{color:'var(--indigo)',label:'Estimator'},b:{color:'var(--coral)',label:'Alternative'}};
-    }
-    function plotLegend(pc,items){
-      var s=[],x=pc.m.l+8,y=28,step=0;
-      items.forEach(function(it,idx){
-        var yy=y+idx*18;
-        s.push('<rect x="'+x+'" y="'+(yy-10)+'" width="14" height="10" rx="2" style="fill:'+it.color+';stroke:'+it.color+'" fill-opacity=".58" stroke-opacity=".85"/>');
-        s.push('<text x="'+(x+21)+'" y="'+yy+'" style="fill:'+it.color+';font-size:12.2px;font-weight:800">'+it.label+'</text>');
-        step=idx;
-      });
-      return s.join('');
     }
     function buildUniformPanel(w,h){
       var m2={t:16,r:30,b:34,l:56};
@@ -966,7 +1439,7 @@
       yMax=Math.max(yMax,normPdf(trueVal,trueVal,predSD))*1.14;
       var pc=makePlot(820,420,{t:58,r:30,b:50,l:56},[lo,hi],[0,yMax]);
       var xlab=mode==='clt'?'sample mean of m Uniform(0,1) draws':(est==='mean'?'estimate of the mean':'estimate of the slope β₁');
-      var s=[axis(pc,lo,hi,xlab)];
+      var s=[axis(pc,lo,hi,xlab,fmtVal)];
       var styles=estimatorStyles();
       s.push(bars(pc,dA,lo,binW,styles.a.color,hasB?'.50':'.60'));
       if(dB)s.push(bars(pc,dB,lo,binW,styles.b.color,'.43'));
@@ -1011,7 +1484,7 @@
       var lo=trueVal-4.2*sdMain(10),hi=trueVal+4.2*sdMain(10);
       var yMax=normPdf(trueVal,trueVal,sdMain(Math.max(hn,500)))*1.08;
       var pc=makePlot(820,420,{t:36,r:30,b:50,l:56},[lo,hi],[0,yMax]);
-      var s=[axis(pc,lo,hi,est==='mean'?'estimate of the mean':'estimate of the slope β₁')];
+      var s=[axis(pc,lo,hi,est==='mean'?'estimate of the mean':'estimate of the slope β₁',fmtVal)];
       nset.forEach(function(n){s.push('<path d="'+curvePath(pc,trueVal,sdMain(n),lo,hi)+'" fill="none" style="stroke:var(--indigo)" stroke-width="1.4" opacity=".28"/>');});
       s.push('<path d="'+curvePath(pc,trueVal,sdAlt(hn),lo,hi)+'" fill="none" style="stroke:var(--coral)" stroke-width="1.8" stroke-dasharray="5 4" opacity=".85"/>');
       s.push('<path d="'+curvePath(pc,trueVal,sdMain(hn),lo,hi)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3"/>');
@@ -1075,6 +1548,1458 @@
     resetBtn.addEventListener('click',function(){resetSamples();render();});
     setMode();
   })();
+
+  /* ============ R² section · extra topics from Ch. 4 and 6 ============ */
+  (function initR2Extra(){
+    var g=el('r2x-g'),topic=el('r2-topic'),kEl=el('r2x-k'),nzEl=el('r2x-noise');
+    var mode='decomp';
+    /* the notes' own plotted series for R² and adjusted R² against K */
+    var R2S =[0.30,0.52,0.63,0.68,0.700,0.712,0.719,0.723];
+    var ADJS=[0.288,0.505,0.608,0.648,0.660,0.630,0.578,0.512];
+    function metric(i,lab,val,note){setTxt('r2x-m'+i+'lab',lab);setTxt('r2x-m'+i,val);setTxt('r2x-m'+i+'note',note||' ');}
+    function chips(list){setHTML('r2x-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+
+    function renderSER(){
+      var nz=parseFloat(nzEl.value);
+      var rng=mulberry32(606),rn=normalGen(rng),xs=[],ys=[],i;
+      for(i=0;i<100;i++){var x=clamp(COMMON.xMean+COMMON.xSd*rn(),COMMON.xLo,COMMON.xHi);
+        xs.push(x);ys.push(699-2.5*x+nz*rn());}
+      var n=xs.length,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0,Syy=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;Sxy+=dx*dy;Sxx+=dx*dx;Syy+=dy*dy;}
+      var b1=Sxy/Sxx,b0=my-b1*mx,RSS=0;
+      for(i=0;i<n;i++){var e=ys[i]-(b0+b1*xs[i]);RSS+=e*e;}
+      var SER=Math.sqrt(RSS/(n-2)),R2=1-RSS/Syy;
+      var lo=Math.floor((Math.min.apply(null,ys)-8)/10)*10,hi=Math.ceil((Math.max.apply(null,ys)+8)/10)*10;
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[13,27],[lo,hi]);
+      var s=[frame(pc,[14,16,18,20,22,24,26],ticks(lo,hi,(hi-lo)>90?20:10),'Student–teacher ratio (STR)','Test score')];
+      /* ±1 SER band around the fitted line */
+      var band=[],b2=[];
+      for(i=0;i<=60;i++){var xx=13+14*i/60;band.push((i?'L':'M')+pc.x(xx).toFixed(1)+','+pc.y(b0+b1*xx+SER).toFixed(1));}
+      for(i=60;i>=0;i--){var xb=13+14*i/60;b2.push('L'+pc.x(xb).toFixed(1)+','+pc.y(b0+b1*xb-SER).toFixed(1));}
+      s.push('<path d="'+band.join('')+b2.join('')+'Z" style="fill:var(--coral)" fill-opacity=".13" stroke="none"/>');
+      for(i=0;i<n;i++)s.push('<circle cx="'+pc.x(xs[i]).toFixed(1)+'" cy="'+pc.y(ys[i]).toFixed(1)+'" r="3.6" style="fill:var(--blue)" fill-opacity=".55" stroke="#fff" stroke-width=".7"/>');
+      s.push('<path d="'+fnPath(pc,function(x){return b0+b1*x;},13,27)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:'fitted line'},{color:'var(--coral)',label:'± 1 SER band = ± '+SER.toFixed(1)+' points'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      var inside=0;for(i=0;i<n;i++){if(Math.abs(ys[i]-(b0+b1*xs[i]))<=SER)inside++;}
+      metric(1,'SER',SER.toFixed(2),'√( RSS / (n − 2) )');
+      metric(2,'R²',R2.toFixed(3),'a share, not a unit');
+      metric(3,'Points inside ± 1 SER',(100*inside/n).toFixed(0)+'%','about 68% if errors are normal');
+      metric(4,'RSS',fmt(RSS),'n = '+n);
+      chips([{t:'SER is measured in <b>test-score points</b> — the typical size of a residual'},
+             {t:'the divisor is n − (K+1): two parameters cost two degrees of freedom'},
+             {t:'R² tells you the <i>share</i> explained; SER tells you <i>how big</i> the misses are',k:'good'}]);
+    }
+
+    function renderAdj(){
+      var K=Math.round(+kEl.value);
+      var pc=makePlot(820,430,{t:34,r:34,b:52,l:70},[0.6,8.4],[0.25,0.78]);
+      var s=[frame(pc,[1,2,3,4,5,6,7,8],[0.3,0.4,0.5,0.6,0.7],'Number of regressors K','measure of fit')];
+      function ser(arr,col,dash,r){
+        var p=arr.map(function(v,i){return (i?'L':'M')+pc.x(i+1).toFixed(1)+','+pc.y(v).toFixed(1);}).join('');
+        var o='<path d="'+p+'" fill="none" style="stroke:'+col+'" stroke-width="3"'+(dash?' stroke-dasharray="6 4"':'')+'/>';
+        arr.forEach(function(v,i){o+='<circle cx="'+pc.x(i+1)+'" cy="'+pc.y(v)+'" r="'+(i+1===K?6:3.8)+'" style="fill:'+col+'"/>';});
+        return o;
+      }
+      s.push(ser(R2S,'var(--blue)',false));
+      s.push(ser(ADJS,'var(--coral)',true));
+      s.push('<line x1="'+pc.x(K)+'" y1="'+pc.y(0.25)+'" x2="'+pc.x(K)+'" y2="'+pc.y(0.78)+'" style="stroke:var(--indigo)" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>');
+      var peak=ADJS.indexOf(Math.max.apply(null,ADJS))+1;
+      s.push('<text x="'+pc.x(peak)+'" y="'+(pc.y(Math.max.apply(null,ADJS))-14)+'" text-anchor="middle" style="fill:var(--coral);font-size:12px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">adjusted R² peaks at K = '+peak+'</text>');
+      s.push(plotLegend(pc,[{color:'var(--blue)',label:'R² — can only rise'},{color:'var(--coral)',label:'adjusted R² — rises, then falls'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'R² at K = '+K,R2S[K-1].toFixed(3),'always ≥ the previous K');
+      metric(2,'Adjusted R² at K = '+K,ADJS[K-1].toFixed(3),ADJS[K-1]<R2S[K-1]?'always below R²':'');
+      metric(3,'Gap',(R2S[K-1]-ADJS[K-1]).toFixed(3),'the degrees-of-freedom penalty');
+      metric(4,'Best K by adjusted R²',String(peak),'after that, extra regressors hurt');
+      /* the notes' n = 51 worked example */
+      var n51=51,K1=1,rss_tss=0.5;
+      var adj51=1-rss_tss*(n51-1)/(n51-(K1+1));
+      setHTML('r2x-extra','<div class="hint" style="margin-top:8px">Worked example from the notes: with <b>n = 51</b>, <b>K = 1</b> and RSS/TSS = ½, R² = 0.5 while adjusted R² = 1 − ½ × (50/49) = <b>'+adj51.toFixed(4)+'</b> — always the smaller of the two.</div>');
+      chips([{t:'adding a regressor can only <b>reduce</b> RSS, so R² can never fall'},
+             {t:'adjusted R² can fall, and can even go <b>negative</b>',k:'warn'},
+             {t:'neither one tells you whether a coefficient is significant — that is a t-test',k:'bad'}]);
+    }
+
+    var TXT={
+      ser:['SER — the typical residual, in the units of Y',
+        'R² is a share and has no units. The <b>standard error of the regression</b> answers the other question: how big is a typical miss? It is the square root of the mean squared residual, using n − (K+1) degrees of freedom.',''],
+      adj:['R² versus adjusted R² as regressors pile up',
+        'R² can never fall when a regressor is added — OLS would set the new coefficient to zero rather than do worse. Adjusted R² multiplies RSS/TSS by (n−1)/(n−K−1), a penalty that grows with K, so it rises only while a new variable does real work.','']
+    };
+    var NOTE={
+      ser:'Reporting both is good practice: R² for how much of the variation is explained, SER for how wrong a typical prediction is.',
+      adj:'Never choose a specification by maximising fit. A control variable belongs in the model if omitting it biases the coefficient you care about — whether or not it improves R².'
+    };
+    function setMode(){
+      mode=topic.value;
+      var classic=(mode==='decomp');
+      showIf('r2-classic',classic);showIf('r2-more',!classic);
+      if(classic)return;
+      showIf('r2x-k-grp',mode==='adj');
+      showIf('r2x-noise-grp',mode==='ser');
+      var t=TXT[mode];setTxt('r2x-title',t[0]);setHTML('r2x-desc',t[1]);
+      if(mode!=='adj')setHTML('r2x-extra','');
+      setTxt('r2x-note',NOTE[mode]);
+      render();
+    }
+    function render(){
+      if(mode==='decomp')return;
+      setTxt('r2x-kv',kEl.value);setTxt('r2x-noisev',parseFloat(nzEl.value).toFixed(1));
+      if(mode==='ser')renderSER();else renderAdj();
+    }
+    topic.addEventListener('change',setMode);
+    [kEl,nzEl].forEach(function(e){e.addEventListener('input',render);});
+    kEl.value=5;nzEl.value=8;
+    setMode();
+  })();
+
+  /* ============ Hypothesis-testing section · extra topics from Ch. 5 and 7 ============ */
+  (function initHTExtra(){
+    var g=el('htx-g'),topic=el('ht-topic'),aSel=el('htx-alpha'),tEl=el('htx-t'),fEl=el('htx-f'),
+        rhoEl=el('htx-rho'),hetEl=el('htx-het');
+    var mode='ttest';
+    function metric(i,lab,val,note){setTxt('htx-m'+i+'lab',lab);setTxt('htx-m'+i,val);setTxt('htx-m'+i+'note',note||' ');}
+    function chips(list){setHTML('htx-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+    var Z=function(x){return Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);};
+
+    /* ---- one-sided vs two-sided ---- */
+    function renderSided(){
+      var a=parseFloat(aSel.value),tv=parseFloat(tEl.value);
+      var c2=tCrit(a,1e7),c1=tCrit(2*a,1e7);      /* two-sided and one-sided critical values */
+      var pc=makePlot(820,430,{t:52,r:34,b:52,l:56},[-4,4],[0,0.44]);
+      var s=[axis(pc,-4,4,'t statistic',function(v){return v.toFixed(0);})];
+      s.push('<path d="'+areaPath(pc,Z,-4,-c1)+'" style="fill:var(--amber)" fill-opacity=".30"/>');
+      s.push('<path d="'+areaPath(pc,Z,c2,4)+'" style="fill:var(--coral)" fill-opacity=".26"/>');
+      s.push('<path d="'+areaPath(pc,Z,-4,-c2)+'" style="fill:var(--coral)" fill-opacity=".26"/>');
+      s.push('<path d="'+fnPath(pc,Z,-4,4)+'" fill="none" style="stroke:var(--indigo)" stroke-width="2.8"/>');
+      [[-c1,'var(--amber)','one-sided −'+c1.toFixed(2)],[c2,'var(--coral)','two-sided +'+c2.toFixed(2)],[-c2,'var(--coral)','two-sided −'+c2.toFixed(2)]].forEach(function(c){
+        s.push('<line x1="'+pc.x(c[0])+'" y1="'+pc.y(0)+'" x2="'+pc.x(c[0])+'" y2="'+pc.y(Z(c[0]))+'" style="stroke:'+c[1]+'" stroke-width="2" stroke-dasharray="4 4"/>');
+      });
+      s.push(vline(pc,tv,'var(--ink)',false,'t = '+tv.toFixed(2),pc.m.t-30));
+      s.push(plotLegend(pc,[{color:'var(--coral)',label:'two-sided rejection region  ±'+c2.toFixed(2)},{color:'var(--amber)',label:'one-sided (left tail) −'+c1.toFixed(2)}],pc.m.l+10,pc.m.t-38));
+      g.innerHTML=s.join('');
+      var r2s=Math.abs(tv)>c2,r1s=tv<-c1;
+      metric(1,'Two-sided critical value','±'+c2.toFixed(3),'α split between two tails');
+      metric(2,'One-sided critical value','−'+c1.toFixed(3),'all of α in one tail');
+      metric(3,'Two-sided decision',r2s?'reject':'fail to reject','at α = '+(100*a).toFixed(0)+'%');
+      metric(4,'One-sided decision',r1s?'reject':'fail to reject','H₁: β₁ < 0');
+      chips([
+        (r1s&&!r2s)?{t:'this t rejects one-sided but <b>not</b> two-sided — the one-sided test needs less evidence',k:'warn'}
+                   :{t:'the one-sided cut-off is always closer to zero than the two-sided one'},
+        {t:'choose the direction from theory <b>before</b> seeing the estimate, or the stated α is not real',k:'bad'}
+      ]);
+    }
+
+    /* ---- confidence intervals ---- */
+    function renderCI(){
+      var a=parseFloat(aSel.value),c=tCrit(a,1e7);
+      var b1=-1.10,se=0.43,dX=-2;                 /* the notes' worked example */
+      var lo=b1-c*se,hi=b1+c*se;
+      var eff=b1*dX,eLo=eff-c*se*Math.abs(dX),eHi=eff+c*se*Math.abs(dX);
+      var pc=makePlot(820,430,{t:44,r:40,b:64,l:60},[-3.2,1.2],[0,3]);
+      var s=[];
+      s.push('<line x1="'+pc.x(-3.2)+'" y1="'+pc.y(0.55)+'" x2="'+pc.x(1.2)+'" y2="'+pc.y(0.55)+'" style="stroke:var(--axis)" stroke-width="1.5"/>');
+      [-3,-2,-1,0,1].forEach(function(v){
+        s.push('<line x1="'+pc.x(v)+'" y1="'+pc.y(0.55)+'" x2="'+pc.x(v)+'" y2="'+(pc.y(0.55)+5)+'" style="stroke:var(--axis)" stroke-width="1"/>');
+        s.push('<text x="'+pc.x(v)+'" y="'+(pc.y(0.55)+21)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+v+'</text>');});
+      s.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.h-10)+'" text-anchor="middle" style="fill:var(--ink);font-size:13px">value of β₁</text>');
+      /* zero reference */
+      s.push('<line x1="'+pc.x(0)+'" y1="'+pc.y(0.55)+'" x2="'+pc.x(0)+'" y2="'+pc.y(2.7)+'" style="stroke:var(--coral)" stroke-width="2" stroke-dasharray="5 4"/>');
+      s.push('<text x="'+pc.x(0)+'" y="'+(pc.y(2.7)-6)+'" text-anchor="middle" style="fill:var(--coral);font-size:12px;font-weight:800">β₁ = 0</text>');
+      /* the interval */
+      var y=1.6;
+      s.push('<line x1="'+pc.x(lo)+'" y1="'+pc.y(y)+'" x2="'+pc.x(hi)+'" y2="'+pc.y(y)+'" style="stroke:var(--indigo)" stroke-width="7" stroke-linecap="round" opacity=".28"/>');
+      [lo,hi].forEach(function(v){s.push('<line x1="'+pc.x(v)+'" y1="'+pc.y(y-0.28)+'" x2="'+pc.x(v)+'" y2="'+pc.y(y+0.28)+'" style="stroke:var(--indigo)" stroke-width="3"/>');});
+      s.push('<circle cx="'+pc.x(b1)+'" cy="'+pc.y(y)+'" r="7" style="fill:var(--indigo)"/>');
+      s.push('<text x="'+pc.x(b1)+'" y="'+(pc.y(y)-18)+'" text-anchor="middle" style="fill:var(--indigo);font-size:13px;font-weight:800">β̂₁ = '+b1.toFixed(2)+'</text>');
+      s.push('<text x="'+pc.x(lo)+'" y="'+(pc.y(y)+26)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+lo.toFixed(2)+'</text>');
+      s.push('<text x="'+pc.x(hi)+'" y="'+(pc.y(y)+26)+'" text-anchor="middle" style="fill:var(--muted);font-size:12px">'+hi.toFixed(2)+'</text>');
+      s.push('<text x="'+(pc.m.l+pc.iw/2)+'" y="'+(pc.m.t-16)+'" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">'+(100*(1-a)).toFixed(0)+'% confidence interval for β₁ — the values a two-sided test would NOT reject</text>');
+      g.innerHTML=s.join('');
+      var excl=(lo>0||hi<0);
+      metric(1,'CI for β₁','['+lo.toFixed(2)+', '+hi.toFixed(2)+']','β̂₁ ± '+c.toFixed(2)+'·SE');
+      metric(2,'Contains 0?',excl?'no':'yes',excl?'significant':'not significant');
+      metric(3,'Predicted effect of ΔSTR = '+dX,eff.toFixed(2),'points');
+      metric(4,'CI for that effect','['+Math.min(eLo,eHi).toFixed(2)+', '+Math.max(eLo,eHi).toFixed(2)+']','multiply the endpoints by |ΔX|');
+      chips([{t:'the notes’ example: β̂ = −1.10, SE = 0.43, a 2-student cut ⇒ +2.20 points, CI [0.51, 3.89]'},
+             {t:'a value lies inside the CI exactly when a two-sided test fails to reject it',k:'good'}]);
+    }
+
+    /* ---- F test ---- */
+    function renderF(){
+      var a=parseFloat(aSel.value),Fv=parseFloat(fEl.value),q=2,dfd=1e7;
+      var Fc=fCrit(a,q,dfd),pv=fSF(Fv,q,dfd);
+      var pdf=function(x){return fPdf(x,q,dfd);};
+      var pc=makePlot(820,430,{t:62,r:34,b:52,l:60},[0,10],[0,1.05]);
+      var s=[axis(pc,0,10,'F statistic  (q = 2 restrictions)',function(v){return v.toFixed(0);})];
+      /* full-height band makes the 1% rejection region visible even though its area is tiny */
+      s.push('<rect x="'+pc.x(Fc)+'" y="'+pc.m.t+'" width="'+(pc.x(10)-pc.x(Fc))+'" height="'+pc.ih+'" style="fill:var(--coral)" fill-opacity=".10"/>');
+      s.push('<path d="'+areaPath(pc,pdf,Fc,10)+'" style="fill:var(--coral)" fill-opacity=".45"/>');
+      s.push('<path d="'+fnPath(pc,pdf,0.015,10,300)+'" fill="none" style="stroke:var(--indigo)" stroke-width="2.8"/>');
+      s.push('<line x1="'+pc.x(Fc)+'" y1="'+pc.y(0)+'" x2="'+pc.x(Fc)+'" y2="'+pc.m.t+'" style="stroke:var(--coral)" stroke-width="2.2" stroke-dasharray="5 4"/>');
+      s.push('<text x="'+pc.x(Fc)+'" y="'+(pc.m.t-6)+'" text-anchor="middle" style="fill:var(--coral);font-size:12px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">critical F = '+Fc.toFixed(2)+'</text>');
+      s.push('<text x="'+(pc.x(Fc)+(pc.x(10)-pc.x(Fc))/2)+'" y="'+(pc.m.t+pc.ih/2)+'" text-anchor="middle" style="fill:var(--coral);font-size:12px;font-weight:700" opacity=".85">rejection region<tspan x="'+(pc.x(Fc)+(pc.x(10)-pc.x(Fc))/2)+'" dy="16">tail area = '+(100*a).toFixed(0)+'%</tspan></text>');
+      s.push(vline(pc,Fv,'var(--ink)',false,'observed F = '+Fv.toFixed(2),pc.m.t-24));
+      s.push('<text x="'+(pc.w/2)+'" y="14" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">The F-test is always one-sided in the upper tail — there is no lower rejection region</text>');
+      g.innerHTML=s.join('');
+      var rej=Fv>Fc;
+      metric(1,'Observed F',Fv.toFixed(2),'q = 2, large n');
+      metric(2,'Critical F',Fc.toFixed(2),'at α = '+(100*a).toFixed(0)+'%');
+      metric(3,'p-value',pv<0.0001?'< 0.0001':pv.toFixed(4),'upper-tail area');
+      metric(4,'Decision',rej?'reject H₀':'fail to reject','H₀: β₁ = 0 and β₂ = 0');
+      chips([
+        {t:'the notes’ example: F = 5.43 against a 1% critical value of 4.61 ⇒ reject',k:'good'},
+        {t:'with q = 1 the F-test is exactly t², so the two always agree'},
+        {t:'testing coefficients one at a time is not a joint test — the t-statistics are correlated',k:'warn'}
+      ]);
+      setHTML('htx-extra','<div class="hint" style="margin-top:8px">F = [(RSS<sub>r</sub> − RSS<sub>ur</sub>)/q] ÷ [RSS<sub>ur</sub>/(n − K − 1)] — imposing the null can only worsen the fit, so RSS<sub>r</sub> ≥ RSS<sub>ur</sub> always. A big F means the restrictions cost a lot of fit.</div>');
+    }
+
+    /* ---- confidence ellipse vs rectangle ---- */
+    function renderEllipse(){
+      var rho=parseFloat(rhoEl.value);
+      var cx=3.8,cy=2.7,s1=1.12,s2=0.55;
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[0.4,7.4],[0.2,5.4]);
+      var s=[frame(pc,[1,2,3,4,5,6,7],[1,2,3,4,5],'β₁','β₂')];
+      /* rectangle from the two separate CIs */
+      var hx=1.96*s1,hy=1.96*s2;
+      s.push('<rect x="'+pc.x(cx-hx)+'" y="'+pc.y(cy+hy)+'" width="'+(pc.x(cx+hx)-pc.x(cx-hx))+'" height="'+(pc.y(cy-hy)-pc.y(cy+hy))+'" fill="none" style="stroke:var(--faint)" stroke-width="2" stroke-dasharray="6 4"/>');
+      /* 95% joint confidence ellipse for a bivariate normal: radius sqrt(5.991) */
+      var k=Math.sqrt(chiCrit(0.05,2)),pts=[],i;
+      for(i=0;i<=140;i++){
+        var th=2*Math.PI*i/140;
+        var u=Math.cos(th),v=Math.sin(th);
+        var xE=cx+k*s1*u, yE=cy+k*s2*(rho*u+Math.sqrt(1-rho*rho)*v);
+        pts.push((i?'L':'M')+pc.x(xE).toFixed(1)+','+pc.y(yE).toFixed(1));
+      }
+      s.push('<path d="'+pts.join('')+'Z" style="fill:var(--blue);stroke:var(--indigo)" fill-opacity=".18" stroke-width="2.6"/>');
+      s.push('<circle cx="'+pc.x(cx)+'" cy="'+pc.y(cy)+'" r="6" style="fill:var(--indigo)"/>');
+      s.push('<text x="'+(pc.x(cx)+10)+'" y="'+(pc.y(cy)-10)+'" style="fill:var(--indigo);font-size:12.5px;font-weight:800">(β̂₁, β̂₂)</text>');
+      /* a corner of the rectangle that the ellipse excludes */
+      var testX=cx+hx*0.92,testY=cy+hy*0.92;
+      var uu=(testX-cx)/(k*s1), vv=((testY-cy)/(k*s2)-rho*uu)/Math.sqrt(1-rho*rho);
+      var insideE=(uu*uu+vv*vv)<=1;
+      s.push('<circle cx="'+pc.x(testX)+'" cy="'+pc.y(testY)+'" r="5" style="fill:'+(insideE?'var(--teal)':'var(--coral)')+'"/>');
+      s.push('<text x="'+pc.x(testX)+'" y="'+(pc.y(testY)-11)+'" text-anchor="middle" style="fill:'+(insideE?'var(--teal)':'var(--coral)')+';font-size:11.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">'+(insideE?'in both':'in the rectangle, outside the ellipse')+'</text>');
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:'95% joint confidence set (F-test)'},{color:'var(--faint)',label:'rectangle from two separate CIs'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'Corr(β̂₁, β̂₂)',rho.toFixed(2),rho<0?'tilts downward':(rho>0?'tilts upward':'axis-aligned'));
+      metric(2,'Ellipse orientation',Math.abs(rho)<0.05?'upright':(rho>0?'up-tilted':'down-tilted'),'the tilt is the correlation');
+      metric(3,'Corner point',insideE?'inside both':'rectangle only','near the rectangle’s corner');
+      metric(4,'Joint vs separate',Math.abs(rho)>0.3?'they disagree':'nearly the same','disagreement grows with |ρ|');
+      chips([{t:'the rectangle from two separate intervals is the natural guess — and it is <b>wrong</b>',k:'bad'},
+             {t:'stronger correlation makes the ellipse longer and thinner — the same effect that inflates Var(β̂ⱼ)'},
+             {t:'a joint statement requires a joint region',k:'good'}]);
+    }
+
+    /* ---- heteroskedasticity + Breusch-Pagan ---- */
+    function renderHet(){
+      var h=parseFloat(hetEl.value);
+      var rng=mulberry32(515),rn=normalGen(rng),xs=[],ys=[],i;
+      for(i=0;i<110;i++){
+        var x=clamp(COMMON.xMean+COMMON.xSd*rn(),COMMON.xLo,COMMON.xHi);
+        var sd=6*(1+h*2.2*((x-14)/12));            /* spread grows with STR when h > 0 */
+        xs.push(x);ys.push(699-2.5*x+sd*rn());
+      }
+      var n=xs.length,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx;Sxy+=dx*(ys[i]-my);Sxx+=dx*dx;}
+      var b1=Sxy/Sxx,b0=my-b1*mx,r2s=[];
+      for(i=0;i<n;i++){var e=ys[i]-(b0+b1*xs[i]);r2s.push(e*e);}
+      /* auxiliary regression of squared residuals on X -> BP = n * R^2 */
+      var ms=0;for(i=0;i<n;i++)ms+=r2s[i];ms/=n;
+      var Sxe=0,Sxx2=0,See=0;
+      for(i=0;i<n;i++){var dx2=xs[i]-mx,de=r2s[i]-ms;Sxe+=dx2*de;Sxx2+=dx2*dx2;See+=de*de;}
+      var auxR2=See?(Sxe*Sxe)/(Sxx2*See):0, BP=n*auxR2, crit=chiCrit(0.05,1), pv=chiSF(BP,1);
+      var lo=Math.floor((Math.min.apply(null,ys)-8)/10)*10,hi=Math.ceil((Math.max.apply(null,ys)+8)/10)*10;
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[13,27],[lo,hi]);
+      var s=[frame(pc,[14,16,18,20,22,24,26],ticks(lo,hi,(hi-lo)>90?20:10),'Student–teacher ratio (STR)','Test score')];
+      /* conditional spread bands at 15, 20, 25 as in the notes' figure */
+      [15,20,25].forEach(function(xv){
+        var sd=6*(1+h*2.2*((xv-14)/12)),yc=b0+b1*xv;
+        s.push('<line x1="'+pc.x(xv)+'" y1="'+pc.y(yc-2*sd)+'" x2="'+pc.x(xv)+'" y2="'+pc.y(yc+2*sd)+'" style="stroke:var(--coral)" stroke-width="9" stroke-opacity=".16" stroke-linecap="round"/>');
+        s.push('<text x="'+(pc.x(xv))+'" y="'+(pc.y(yc+2*sd)-7)+'" text-anchor="middle" style="fill:var(--coral);font-size:11px;font-weight:700">±2σ at '+xv+'</text>');
+      });
+      for(i=0;i<n;i++)s.push('<circle cx="'+pc.x(xs[i]).toFixed(1)+'" cy="'+pc.y(ys[i]).toFixed(1)+'" r="3.5" style="fill:var(--blue)" fill-opacity=".55" stroke="#fff" stroke-width=".7"/>');
+      s.push('<path d="'+fnPath(pc,function(x){return b0+b1*x;},13,27)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3"/>');
+      g.innerHTML=s.join('');
+      var rej=BP>crit;
+      metric(1,'Breusch–Pagan  n·R²',BP.toFixed(2),'auxiliary R² = '+auxR2.toFixed(3));
+      metric(2,'χ² critical value (K = 1)',crit.toFixed(2),'at 5%');
+      metric(3,'p-value',pv<0.0001?'< 0.0001':pv.toFixed(4),'');
+      metric(4,'Verdict',rej?'heteroskedastic':'no evidence',rej?'reject constant variance':'fail to reject');
+      chips([
+        {t:'OLS stays <b>unbiased</b> under heteroskedasticity — it is the standard errors that break',k:'good'},
+        {t:'so the usual t-statistics and CIs are invalid, and OLS is no longer BLUE',k:'bad'},
+        {t:'remedy: heteroskedasticity-robust standard errors, which are valid either way'}
+      ]);
+    }
+
+    var TXT={
+      sided:['One-sided versus two-sided tests',
+        'The t-statistic is identical; only the rejection region changes. A two-sided test splits α between both tails; a one-sided test puts all of α in one tail, so its cut-off is closer to zero and it rejects more easily.',''],
+      ci:['Confidence intervals for β₁ and for a predicted effect',
+        'The 95% interval is β̂₁ ± 1.96·SE. It contains exactly the values that a two-sided 5% test would fail to reject. To get the interval for a predicted change, multiply both endpoints by ΔX.',''],
+      ftest:['Joint hypotheses and the F-statistic',
+        'A joint null imposes several restrictions at once. Because the individual t-statistics are correlated, testing them one at a time is not the same test. The F-statistic combines them into one measure of how far all the restrictions are from holding.',''],
+      ellipse:['Confidence sets for two coefficients',
+        'A 95% confidence set for a pair of coefficients is the set of values the F-test does not reject. It is an <b>ellipse</b>, tilted by the correlation between the two estimators — not the rectangle formed by two separate intervals.',''],
+      het:['Heteroskedasticity and robust standard errors',
+        'Homoskedasticity means the spread of the errors is the same at every X. When it grows with X, the usual variance formula is wrong. The Breusch–Pagan test regresses the squared residuals on the regressors and compares n·R² with a χ² critical value.','']
+    };
+    var NOTE={
+      sided:'Use a one-sided test only when theory fixes the direction in advance. Choosing the direction after seeing the sign invalidates the significance level.',
+      ci:'A confidence interval carries more information than a reject/fail verdict: it shows which values are plausible, and whether the plausible ones are large enough to matter.',
+      ftest:'The overall F asks only whether anything in the regression is doing work. It is a screening device, never evidence about a particular coefficient.',
+      ellipse:'Points can sit inside the rectangle yet outside the ellipse, and the reverse — which is exactly why a joint hypothesis needs a joint test.',
+      het:'Heteroskedasticity is the norm in cross-sectional data, so robust standard errors should be the default rather than the exception.'
+    };
+    function setMode(){
+      mode=topic.value;
+      var classic=(mode==='ttest');
+      showIf('ht-classic',classic);showIf('ht-more',!classic);
+      if(classic)return;
+      showIf('htx-a-lbl',mode!=='ellipse'&&mode!=='het');showIf('htx-alpha',mode!=='ellipse'&&mode!=='het');
+      showIf('htx-t-grp',mode==='sided');
+      showIf('htx-f-grp',mode==='ftest');
+      showIf('htx-rho-grp',mode==='ellipse');
+      showIf('htx-het-grp',mode==='het');
+      var t=TXT[mode];setTxt('htx-title',t[0]);setHTML('htx-desc',t[1]);
+      if(mode!=='ftest')setHTML('htx-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('htx-note',NOTE[mode]);
+      render();
+    }
+    function render(){
+      if(mode==='ttest')return;
+      setTxt('htx-tv',parseFloat(tEl.value).toFixed(2));
+      setTxt('htx-fv',parseFloat(fEl.value).toFixed(2));
+      setTxt('htx-rhov',parseFloat(rhoEl.value).toFixed(2));
+      setTxt('htx-hetv',parseFloat(hetEl.value).toFixed(2));
+      if(mode==='sided')renderSided();
+      else if(mode==='ci')renderCI();
+      else if(mode==='ftest')renderF();
+      else if(mode==='ellipse')renderEllipse();
+      else if(mode==='het')renderHet();
+    }
+    topic.addEventListener('change',setMode);
+    aSel.addEventListener('change',render);
+    [tEl,fEl,rhoEl,hetEl].forEach(function(e){e.addEventListener('input',render);});
+    tEl.value=-1.8;fEl.value=5.43;rhoEl.value=-0.6;hetEl.value=0.6;
+    setMode();
+  })();
+
+  /* ============ OLS section · extra topics from Ch. 4, 6 and 7 ============ */
+  (function initOLSExtra(){
+    var g=el('olsx-g'),topic=el('ols-topic');
+    var tqEl=el('olsx-tq'),rhoEl=el('olsx-rho'),zyChk=el('olsx-zy'),zxChk=el('olsx-zx'),drawBtn=el('olsx-draw');
+    var mode='fit',seed=31;
+    /* the notes' two specifications */
+    var SINGLE={b0:698.9,b1:-2.28,se1:0.52,R2:0.051,SER:18.6};
+    var MULTI ={b0:686.0,b1:-2.70,b2:1.2,R2:0.426,R2adj:0.424,SER:14.5};
+    var TRUE_B0=699,TRUE_B1=-2.5;
+
+    function metric(i,lab,val,note){setTxt('olsx-m'+i+'lab',lab);setTxt('olsx-m'+i,val);setTxt('olsx-m'+i+'note',note||' ');}
+    function chips(list){setHTML('olsx-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+    function scatXY(pc,xs,ys,col,op,r){
+      var s=[],i;for(i=0;i<xs.length;i++)
+        s.push('<circle cx="'+pc.x(xs[i]).toFixed(1)+'" cy="'+pc.y(ys[i]).toFixed(1)+'" r="'+(r||3.8)+'" style="fill:'+col+'" fill-opacity="'+(op||'.55')+'" stroke="#fff" stroke-width=".8"/>');
+      return s.join('');
+    }
+    function fitXY(xs,ys){
+      var n=xs.length,i,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0,Syy=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;Sxy+=dx*dy;Sxx+=dx*dx;Syy+=dy*dy;}
+      var b1=Sxx?Sxy/Sxx:0,b0=my-b1*mx,RSS=0;
+      for(i=0;i<n;i++){var e=ys[i]-(b0+b1*xs[i]);RSS+=e*e;}
+      return {b0:b0,b1:b1,mx:mx,my:my,Sxx:Sxx,Syy:Syy,RSS:RSS,n:n,R2:Syy?1-RSS/Syy:0};
+    }
+    function sampleSimple(sd){
+      var rng=mulberry32(sd),rn=normalGen(rng),xs=[],ys=[],i;
+      for(i=0;i<40;i++){var x=clamp(COMMON.xMean+COMMON.xSd*rn(),COMMON.xLo,COMMON.xHi);
+        xs.push(x);ys.push(TRUE_B0+TRUE_B1*x+9*rn());}
+      return {xs:xs,ys:ys};
+    }
+
+    /* ---- PRF vs SRF ---- */
+    function renderPRF(){
+      var S=sampleSimple(seed),F=fitXY(S.xs,S.ys);
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[13,27],[610,710]);
+      var s=[frame(pc,[14,16,18,20,22,24,26],[620,640,660,680,700],'Student–teacher ratio (STR)','Test score')];
+      s.push(scatXY(pc,S.xs,S.ys,'var(--blue)','.6'));
+      s.push('<path d="'+fnPath(pc,function(x){return TRUE_B0+TRUE_B1*x;},13,27)+'" fill="none" style="stroke:var(--teal)" stroke-width="3.2"/>');
+      s.push('<path d="'+fnPath(pc,function(x){return F.b0+F.b1*x;},13,27)+'" fill="none" style="stroke:var(--coral)" stroke-width="3" stroke-dasharray="7 4"/>');
+      s.push(plotLegend(pc,[{color:'var(--teal)',label:'PRF (population, unknown): β₁ = '+TRUE_B1.toFixed(2)},{color:'var(--coral)',label:'SRF (this sample): β̂₁ = '+F.b1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'True slope β₁',TRUE_B1.toFixed(2),'fixed — never changes');
+      metric(2,'This sample’s β̂₁',F.b1.toFixed(2),'moves with every draw');
+      metric(3,'Sampling error',(F.b1-TRUE_B1>0?'+':'')+(F.b1-TRUE_B1).toFixed(2),'β̂₁ − β₁');
+      metric(4,'Sample size',String(F.n),'40 districts');
+      chips([{t:'the green PRF stays put; only the dashed SRF moves'},
+             {t:'draw repeatedly and β̂₁ scatters <b>around</b> β₁ — that is unbiasedness',k:'good'}]);
+    }
+
+    /* ---- algebraic properties ---- */
+    function renderAlgebra(){
+      var S=sampleSimple(seed),F=fitXY(S.xs,S.ys),i;
+      var sumR=0,sumRX=0,sumRY=0,yhbar=0;
+      for(i=0;i<S.xs.length;i++){
+        var yh=F.b0+F.b1*S.xs[i],e=S.ys[i]-yh;
+        sumR+=e;sumRX+=e*S.xs[i];sumRY+=e*yh;yhbar+=yh;
+      }
+      yhbar/=S.xs.length;
+      var ybar=F.my;
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[13,27],[610,710]);
+      var s=[frame(pc,[14,16,18,20,22,24,26],[620,640,660,680,700],'Student–teacher ratio (STR)','Test score')];
+      for(i=0;i<S.xs.length;i++){var yh2=F.b0+F.b1*S.xs[i];
+        s.push('<line x1="'+pc.x(S.xs[i])+'" y1="'+pc.y(S.ys[i])+'" x2="'+pc.x(S.xs[i])+'" y2="'+pc.y(yh2)+'" style="stroke:var(--coral)" stroke-width="1.3" stroke-opacity=".5"/>');}
+      s.push(scatXY(pc,S.xs,S.ys,'var(--blue)','.6'));
+      s.push('<path d="'+fnPath(pc,function(x){return F.b0+F.b1*x;},13,27)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+      var cx=pc.x(F.mx),cy=pc.y(ybar),r=7;
+      s.push('<rect x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+(2*r)+'" height="'+(2*r)+'" transform="rotate(45 '+cx+' '+cy+')" style="fill:var(--amber)" stroke="#fff" stroke-width="1.6"/>');
+      s.push('<text x="'+(cx+14)+'" y="'+(cy-12)+'" style="fill:var(--amber);font-size:12.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">the fit passes through (X̅, Y̅)</text>');
+      g.innerHTML=s.join('');
+      metric(1,'Σ residuals',sumR.toFixed(6),'exactly 0');
+      metric(2,'Σ residual × X',sumRX.toFixed(4),'exactly 0');
+      metric(3,'Σ residual × fitted',sumRY.toFixed(4),'exactly 0');
+      metric(4,'mean(Ŷ) − mean(Y)',(yhbar-ybar).toFixed(6),'exactly 0');
+      chips([{t:'these are <b>algebraic identities</b>, not assumptions — they hold for every sample',k:'good'},
+             {t:'they are exactly the first-order conditions OLS solved'},
+             {t:'because Σû = 0 and Σûx = 0, the residuals carry no leftover linear signal in X'}]);
+    }
+
+    /* ---- multiple regression & partial effect ---- */
+    function renderMulti(){
+      var TQ=parseFloat(tqEl.value);
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[13,27],[600,720]);
+      var s=[frame(pc,[14,16,18,20,22,24,26],[610,640,670,700],'Student–teacher ratio (STR)','Test score')];
+      /* the biased single-regressor line vs the multiple-regression line at a chosen TQ */
+      s.push('<path d="'+fnPath(pc,function(x){return SINGLE.b0+SINGLE.b1*x;},13,27)+'" fill="none" style="stroke:var(--coral)" stroke-width="3" stroke-dasharray="7 4"/>');
+      [-2,-1,0,1,2].forEach(function(q){
+        var op=(Math.abs(q-TQ)<0.55)?1:0.22, w=(Math.abs(q-TQ)<0.55)?3.4:1.6;
+        s.push('<path d="'+fnPath(pc,function(x){return MULTI.b0+MULTI.b1*x+MULTI.b2*q;},13,27)+'" fill="none" style="stroke:var(--indigo)" stroke-width="'+w+'" opacity="'+op+'"/>');
+      });
+      s.push('<path d="'+fnPath(pc,function(x){return MULTI.b0+MULTI.b1*x+MULTI.b2*TQ;},13,27)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.6"/>');
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:'multiple regression, TQ held at '+TQ.toFixed(1)+' → slope '+MULTI.b1.toFixed(2)},{color:'var(--coral)',label:'single regressor (TQ omitted) → slope '+SINGLE.b1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'β̂₁ with TQ omitted',SINGLE.b1.toFixed(2),'biased');
+      metric(2,'β̂₁ holding TQ fixed',MULTI.b1.toFixed(2),'the partial effect');
+      metric(3,'Difference',(MULTI.b1-SINGLE.b1).toFixed(2),Math.abs(100*(MULTI.b1-SINGLE.b1)/SINGLE.b1).toFixed(0)+'% change');
+      metric(4,'R² — one vs two regressors',SINGLE.R2.toFixed(3)+' → '+MULTI.R2.toFixed(3),'SER '+SINGLE.SER+' → '+MULTI.SER);
+      chips([{t:'β₁ is the effect of STR <b>holding TQ constant</b> — moving TQ shifts the line without tilting it'},
+             {t:'omitting TQ made class size look <b>less</b> harmful than it is',k:'warn'}]);
+    }
+
+    /* ---- omitted variable bias sign machine ---- */
+    function renderOVB(){
+      var zRaisesY=zyChk.checked, zWithX=zxChk.checked;
+      var signY=zRaisesY?1:-1, signX=zWithX?1:-1, biasSign=signY*signX;
+      var rho=0.55*signX, sdU=9, sdX=COMMON.xSd;
+      var bias=biasSign*Math.abs(rho)*(sdU/sdX)*0.42;
+      var pc=makePlot(820,430,{t:20,r:20,b:20,l:20},[0,820],[0,430]);
+      var s=['<defs><marker id="ovbarrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>'];
+      function nd(x,y,w,h,label,col,fill){
+        return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="9" style="fill:'+(fill||'var(--card)')+';stroke:'+col+'" stroke-width="2.2"/>'+
+               '<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" class="pathnode" style="fill:'+col+'">'+label+'</text>';
+      }
+      function ar(x1,y1,x2,y2,col,dash,label,lx,ly){
+        var o='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" style="stroke:'+col+'" stroke-width="2.4"'+(dash?' stroke-dasharray="6 4"':'')+' marker-end="url(#ovbarrow)"/>';
+        if(label)o+='<text x="'+lx+'" y="'+ly+'" text-anchor="middle" class="pathlbl" style="fill:'+col+'">'+label+'</text>';
+        return o;
+      }
+      s.push(nd(410,90,190,50,'Z  omitted variable','var(--coral)','var(--sq-fill)'));
+      s.push(nd(230,275,150,50,'X  regressor','var(--blue)'));
+      s.push(nd(610,275,150,50,'Y  outcome','var(--indigo)'));
+      s.push(ar(340,110,268,250,'var(--coral)',false,signX>0?'moves together (+)':'moves opposite (−)',215,180));
+      s.push(ar(480,110,570,250,'var(--coral)',false,signY>0?'raises Y (+)':'lowers Y (−)',625,180));
+      s.push(ar(305,275,535,275,'var(--blue)',false,'β₁ — what we want',420,262));
+      var col=biasSign>0?'var(--coral)':'var(--teal)';
+      s.push('<text x="410" y="360" text-anchor="middle" style="fill:'+col+';font-size:16px;font-weight:800">('+(signX>0?'+':'−')+') × ('+(signY>0?'+':'−')+')  ⇒  bias is '+(biasSign>0?'POSITIVE':'NEGATIVE')+'</text>');
+      s.push('<text x="410" y="386" text-anchor="middle" style="fill:var(--muted);font-size:12.5px">E(β̂₁) = β₁ + ρ<tspan baseline-shift="sub" font-size="9">Xu</tspan> · (σ<tspan baseline-shift="sub" font-size="9">u</tspan>/σ<tspan baseline-shift="sub" font-size="9">X</tspan>)  — the sign of the bias is the sign of ρ</text>');
+      g.innerHTML=s.join('');
+      metric(1,'Sign of the bias',biasSign>0?'positive':'negative','product of the two signs');
+      metric(2,'True β₁',TRUE_B1.toFixed(2),'target');
+      metric(3,'What OLS converges to',(TRUE_B1+bias).toFixed(2),'β₁ + bias');
+      metric(4,'Bias',(bias>0?'+':'')+bias.toFixed(2),'ρ · σu/σX');
+      chips([
+        {t:'the notes’ case: family income <b>raises</b> scores and is <b>negatively</b> correlated with STR ⇒ negative bias'},
+        {t:'that is exactly −2.28 vs −2.70: omitting it <b>understates</b> the class-size penalty',k:'warn'},
+        {t:'bias does not shrink with n — a bigger sample converges precisely on the wrong number',k:'bad'}
+      ]);
+    }
+
+    /* ---- multicollinearity ---- */
+    function renderMC(){
+      var rho=parseFloat(rhoEl.value);
+      var n=100,su2=64,sx2=COMMON.xSd*COMMON.xSd;
+      function varB(r){return (1/n)*su2/(sx2*(1-r*r));}
+      var se=Math.sqrt(varB(rho)),se0=Math.sqrt(varB(0));
+      var pc=makePlot(820,430,{t:34,r:34,b:52,l:74},[0,0.995],[0,Math.sqrt(varB(0.95))*1.05]);
+      var yt=ticks(0,Math.sqrt(varB(0.95)),Math.sqrt(varB(0.95))/4);
+      var s=[frame(pc,[0,0.2,0.4,0.6,0.8,0.99],yt.map(function(v){return Math.round(v*100)/100;}),'Correlation between the two regressors  |ρ|','SE(β̂₁)')];
+      s.push('<path d="'+fnPath(pc,function(r){return Math.sqrt(varB(r));},0,0.975,240)+'" fill="none" style="stroke:var(--coral)" stroke-width="3.2"/>');
+      s.push('<line x1="'+pc.x(rho)+'" y1="'+pc.y(0)+'" x2="'+pc.x(rho)+'" y2="'+pc.y(se)+'" style="stroke:var(--indigo)" stroke-width="2.4" stroke-dasharray="5 4"/>');
+      s.push('<circle cx="'+pc.x(rho)+'" cy="'+pc.y(se)+'" r="6" style="fill:var(--indigo)"/>');
+      s.push('<text x="'+pc.x(rho)+'" y="'+(pc.y(se)-14)+'" text-anchor="middle" style="fill:var(--indigo);font-size:12.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">SE = '+se.toFixed(3)+'</text>');
+      s.push('<text x="'+(pc.m.l+12)+'" y="'+(pc.m.t+16)+'" style="fill:var(--muted);font-size:12.5px">Var(β̂ⱼ) = (1/n) · σ²u / [ σ²Xⱼ · (1 − ρ²) ]  — the 1 − ρ² term is the whole story</text>');
+      g.innerHTML=s.join('');
+      var tstat=Math.abs(TRUE_B1)/se;
+      metric(1,'SE(β̂₁)',se.toFixed(3),(se/se0).toFixed(2)+'× the ρ = 0 value');
+      metric(2,'1 − ρ²',(1-rho*rho).toFixed(3),'the variance inflation term');
+      metric(3,'|t| for β₁ = '+TRUE_B1.toFixed(2),tstat.toFixed(2),tstat>1.96?'still significant':'no longer significant');
+      metric(4,'95% CI width',(2*1.96*se).toFixed(2),'widens as ρ → 1');
+      chips(rho>0.95
+        ?[{t:'near-perfect collinearity: the estimate survives but is almost uninformative',k:'bad'},
+          {t:'at |ρ| = 1 exactly the denominator is 0 — β̂ⱼ does not exist at all'}]
+        :[{t:'imperfect multicollinearity leaves β̂ <b>unbiased</b> — only imprecise',k:'good'},
+          {t:'it is a feature of the data, not a specification error'}]);
+    }
+
+    var TXT={
+      prfsrf:['Population regression line vs sample regression line',
+        'The <b>PRF</b> is the unknown truth: E(Y|X) = β₀ + β₁X. The <b>SRF</b> is what one sample gives us. Draw a new sample and the fitted line jumps around — the population line does not move at all.',''],
+      algebra:['Algebraic properties of the OLS fit',
+        'Five identities hold for <em>every</em> OLS fit, whatever the data: the residuals sum to zero, they are uncorrelated with X and with the fitted values, the mean fitted value equals the mean of Y, and the line passes through (X̅, Y̅).',''],
+      multi:['Multiple regression and the partial effect',
+        'Adding teacher quality changes the class-size coefficient from <b>−2.28</b> to <b>−2.70</b>. With TQ in the model, β₁ answers a sharper question: the effect of STR <em>holding teacher quality constant</em>.',''],
+      ovb:['Omitted variable bias — signing it before you estimate',
+        'Two questions settle the direction of the bias. Does the omitted variable <b>raise or lower Y</b>? Does it move <b>with or against X</b>? The product of those two signs is the sign of the bias.',''],
+      mc:['Multicollinearity — precision, not bias',
+        'When two regressors are highly correlated, OLS still gives unbiased estimates, but it cannot tell their separate contributions apart. The variance carries a 1/(1 − ρ²) factor that explodes as ρ approaches 1.','']
+    };
+    var NOTE={
+      prfsrf:'We never observe the PRF. Everything in inference is an argument about how far the SRF is likely to sit from it.',
+      algebra:'These identities are why R² behaves the way it does — they are what makes TSS split cleanly into ESS and RSS.',
+      multi:'Adding a regressor changes what the other coefficients mean. Always state which variables were held constant.',
+      ovb:'You can report the direction of a bias honestly even when you cannot measure the omitted variable — that is what signing the bias is for.',
+      mc:'The remedy is rarely to drop a variable that belongs in the model. Wide standard errors are information: the data cannot separate these two effects.'
+    };
+    function setMode(){
+      mode=topic.value;
+      var classic=(mode==='fit');
+      showIf('ols-classic',classic);showIf('ols-more',!classic);
+      if(classic)return;
+      showIf('olsx-a-lbl',mode==='prfsrf'||mode==='algebra');
+      showIf('olsx-draw',mode==='prfsrf'||mode==='algebra');
+      showIf('olsx-tq-grp',mode==='multi');
+      showIf('olsx-rho-grp',mode==='mc');
+      showIf('olsx-zy-wrap',mode==='ovb');showIf('olsx-zx-wrap',mode==='ovb');
+      var t=TXT[mode];setTxt('olsx-title',t[0]);setHTML('olsx-desc',t[1]);
+      setHTML('olsx-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('olsx-note',NOTE[mode]);
+      render();
+    }
+    function render(){
+      if(mode==='fit')return;
+      setTxt('olsx-tqv',parseFloat(tqEl.value).toFixed(1));
+      setTxt('olsx-rhov',parseFloat(rhoEl.value).toFixed(2));
+      if(mode==='prfsrf')renderPRF();
+      else if(mode==='algebra')renderAlgebra();
+      else if(mode==='multi')renderMulti();
+      else if(mode==='ovb')renderOVB();
+      else if(mode==='mc')renderMC();
+    }
+    topic.addEventListener('change',setMode);
+    [tqEl,rhoEl,zyChk,zxChk].forEach(function(e){e.addEventListener('input',render);});
+    drawBtn.addEventListener('click',function(){seed++;render();});
+    tqEl.value=0;rhoEl.value=0.5;
+    setMode();
+  })();
+
+  /* ===================== CH. 8 · NONLINEAR REGRESSION ===================== */
+  (function initNL(){
+    /* Published estimates from the lecture notes (California districts, robust SEs) */
+    var Q={b0:607.3,b1:3.85,b2:-0.0423,se0:2.9,se1:0.27,se2:0.0048,R2adj:0.55};
+    var LIN={b0:616,b1:1.88};                 /* the straight-line comparison from the notes */
+    var F_2196=299.94;                        /* notes' F for H0: b1 + 21*b2 = 0 */
+    var g=el('nl-g'),scnSel=el('nl-scn');
+    var xEl=el('nl-x'),degEl=el('nl-deg'),logSel=el('nl-logtype'),intSel=el('nl-intertype'),pdSel=el('nl-polydata'),
+        b3El=el('nl-b3'),meEl=el('nl-me'),linChk=el('nl-lin');
+    var mode='quad';
+
+    /* --- scatter generated from the notes' own quadratic, so the published curve genuinely fits --- */
+    var DATA=(function(){
+      var rng=mulberry32(8081),rn=normalGen(rng),pts=[],i,x;
+      for(i=0;i<64;i++){
+        x=4+52*Math.pow(i/63,1.15);
+        pts.push([r1(x), r1(Q.b0+Q.b1*x+Q.b2*x*x+7.5*rn())]);
+      }
+      return pts;
+    })();
+    var XS=DATA.map(function(d){return d[0];}),YS=DATA.map(function(d){return d[1];});
+
+    /* ---- polynomial least squares (scaled to [-1,1] for numerical stability) ---- */
+    function polyFit(xs,ys,r){
+      var n=xs.length,p=r+1,i,j,k;
+      var lo=Math.min.apply(null,xs),hi=Math.max.apply(null,xs),mid=(lo+hi)/2,half=(hi-lo)/2||1;
+      var A=[],b=[];
+      for(j=0;j<p;j++){var row=[];for(k=0;k<p;k++)row.push(0);A.push(row);b.push(0);}
+      for(i=0;i<n;i++){
+        var u=(xs[i]-mid)/half,pw=[],v=1;
+        for(j=0;j<p;j++){pw.push(v);v*=u;}
+        for(j=0;j<p;j++){b[j]+=pw[j]*ys[i];for(k=0;k<p;k++)A[j][k]+=pw[j]*pw[k];}
+      }
+      /* Gauss-Jordan: solve and get the inverse diagonal for standard errors */
+      var M=[],I=[];
+      for(j=0;j<p;j++){M.push(A[j].slice());var e=[];for(k=0;k<p;k++)e.push(j===k?1:0);I.push(e);}
+      for(j=0;j<p;j++){
+        var piv=j;for(i=j+1;i<p;i++)if(Math.abs(M[i][j])>Math.abs(M[piv][j]))piv=i;
+        if(Math.abs(M[piv][j])<1e-12)return null;
+        var tm=M[j];M[j]=M[piv];M[piv]=tm;var ti=I[j];I[j]=I[piv];I[piv]=ti;
+        var d=M[j][j];
+        for(k=0;k<p;k++){M[j][k]/=d;I[j][k]/=d;}
+        for(i=0;i<p;i++){if(i===j)continue;var f=M[i][j];if(!f)continue;
+          for(k=0;k<p;k++){M[i][k]-=f*M[j][k];I[i][k]-=f*I[j][k];}}
+      }
+      var c=[];for(j=0;j<p;j++){var s=0;for(k=0;k<p;k++)s+=I[j][k]*b[k];c.push(s);}
+      function evalU(u){var s=0,v=1,j2;for(j2=0;j2<p;j2++){s+=c[j2]*v;v*=u;}return s;}
+      var RSS=0,sy=0;for(i=0;i<n;i++)sy+=ys[i];var my=sy/n,TSS=0;
+      for(i=0;i<n;i++){var e2=ys[i]-evalU((xs[i]-mid)/half);RSS+=e2*e2;TSS+=(ys[i]-my)*(ys[i]-my);}
+      var df=n-p,s2=RSS/df;
+      var seTop=Math.sqrt(s2*I[p-1][p-1]);
+      return {c:c,p:p,mid:mid,half:half,RSS:RSS,TSS:TSS,df:df,
+              R2:1-RSS/TSS,R2adj:1-(RSS/df)/(TSS/(n-1)),SER:Math.sqrt(s2),
+              tTop:c[p-1]/seTop,seTop:seTop,
+              at:function(x){return evalU((x-mid)/half);}};
+    }
+    /* Three data shapes for the polynomial demo. Degree only matters when the data
+       actually contains that much curvature — which is the point of sequential testing. */
+    var POLYSETS={};
+    (function(){
+      function mk(seed,f,nz){
+        var rng=mulberry32(seed),rn=normalGen(rng),xs=[],ys=[],i;
+        for(i=0;i<64;i++){var x=4+52*(i/63);xs.push(r1(x));ys.push(r1(f(x)+nz*rn()));}
+        return {xs:xs,ys:ys};
+      }
+      POLYSETS.quad ={d:{xs:XS,ys:YS},label:'quadratic'};
+      POLYSETS.cubic={d:mk(313,function(x){var c=x-30;return 650+0.9*c-0.02*c*c+0.0016*c*c*c;},4.5),label:'cubic'};
+      POLYSETS.wave ={d:mk(717,function(x){var c=(x-30)/12;return 660+9*c-11*c*c-3.2*c*c*c+3.6*c*c*c*c;},4.0),label:'wavy'};
+      for(var k in POLYSETS){
+        var D=POLYSETS[k].d,fits=[];
+        for(var r=1;r<=5;r++)fits.push(polyFit(D.xs,D.ys,r));
+        POLYSETS[k].fits=fits;
+        var lo=Math.min.apply(null,D.ys),hi=Math.max.apply(null,D.ys),pad=(hi-lo)*0.12;
+        POLYSETS[k].dom=[Math.floor((lo-pad)/10)*10,Math.ceil((hi+pad)/10)*10];
+      }
+    })();
+    var POLY=POLYSETS.quad.fits;
+
+    /* ---- simple one-regressor OLS on arbitrary arrays ---- */
+    function fit1(xs,ys){
+      var n=xs.length,i,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0,Syy=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;Sxy+=dx*dy;Sxx+=dx*dx;Syy+=dy*dy;}
+      var b1=Sxy/Sxx,b0=my-b1*mx,RSS=0;
+      for(i=0;i<n;i++){var e=ys[i]-(b0+b1*xs[i]);RSS+=e*e;}
+      return {b0:b0,b1:b1,R2:1-RSS/Syy,n:n};
+    }
+
+    function scat(pc,pts,col,op,r){
+      var s=[],i;for(i=0;i<pts.length;i++)
+        s.push('<circle cx="'+pc.x(pts[i][0]).toFixed(1)+'" cy="'+pc.y(pts[i][1]).toFixed(1)+'" r="'+(r||3.6)+'" style="fill:'+col+'" fill-opacity="'+(op||'.62')+'" stroke="#fff" stroke-width=".8"/>');
+      return s.join('');
+    }
+    function metric(i,lab,val,note){setTxt('nl-m'+i+'lab',lab);setTxt('nl-m'+i,val);setTxt('nl-m'+i+'note',note||' ');}
+    function chips(list){setHTML('nl-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+
+    /* ============ MODE: why nonlinear ============ */
+    function renderWhy(){
+      var f=function(x){return 0.7+7/(x+1);};
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:64},[0.6,8.4],[0,5.6]);
+      var xt=[1,2,3,4,5,6,7,8],yt=[0,1,2,3,4,5];
+      var s=[frame(pc,xt,yt,'X (e.g. student–teacher ratio)','Y (test score)')];
+      s.push('<path d="'+fnPath(pc,f,0.75,8.2)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2" stroke-linecap="round"/>');
+      [[0.8,1.8,'var(--coral)','big drop in Y'],[5.5,6.5,'var(--teal)','small drop in Y']].forEach(function(st){
+        var a=st[0],b=st[1],col=st[2],lab=st[3],ya=f(a),yb=f(b);
+        s.push('<line x1="'+pc.x(a)+'" y1="'+pc.y(ya)+'" x2="'+pc.x(b)+'" y2="'+pc.y(ya)+'" style="stroke:'+col+'" stroke-width="2.2" stroke-dasharray="4 3"/>');
+        s.push('<line x1="'+pc.x(b)+'" y1="'+pc.y(ya)+'" x2="'+pc.x(b)+'" y2="'+pc.y(yb)+'" style="stroke:'+col+'" stroke-width="3"/>');
+        s.push('<circle cx="'+pc.x(a)+'" cy="'+pc.y(ya)+'" r="4.6" style="fill:'+col+'"/>');
+        s.push('<circle cx="'+pc.x(b)+'" cy="'+pc.y(yb)+'" r="4.6" style="fill:'+col+'"/>');
+        s.push('<text x="'+(pc.x(b)+9)+'" y="'+((pc.y(ya)+pc.y(yb))/2+4)+'" style="fill:'+col+';font-size:12px;font-weight:800">'+lab+'</text>');
+        s.push('<text x="'+((pc.x(a)+pc.x(b))/2)+'" y="'+(pc.y(ya)-8)+'" text-anchor="middle" style="fill:'+col+';font-size:11.5px;font-weight:700">ΔX = 1</text>');
+      });
+      g.innerHTML=s.join('');
+      var d1=f(0.8)-f(1.8),d2=f(5.5)-f(6.5);
+      metric(1,'Drop in Y at X = 0.8 → 1.8','−'+d1.toFixed(2),'the same ΔX = 1');
+      metric(2,'Drop in Y at X = 5.5 → 6.5','−'+d2.toFixed(2),'the same ΔX = 1');
+      metric(3,'Ratio of the two effects',(d1/d2).toFixed(1)+'×','one straight line cannot do this');
+      metric(4,'Slope of a straight line','constant','one number everywhere');
+      chips([{t:'a single β₁ cannot describe both steps',k:'bad'},{t:'the slope must depend on X',k:'good'}]);
+    }
+
+    /* ============ MODE: quadratic ============ */
+    function qAt(x){return Q.b0+Q.b1*x+Q.b2*x*x;}
+    function renderQuad(){
+      var I=parseFloat(xEl.value);
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[0,56],[590,715]);
+      var s=[frame(pc,[0,10,20,30,40,50],[600,625,650,675,700],'District income ($000)','Test score')];
+      if(linChk.checked)
+        s.push('<path d="'+fnPath(pc,function(x){return LIN.b0+LIN.b1*x;},0,56)+'" fill="none" style="stroke:var(--amber)" stroke-width="2.4" stroke-dasharray="7 5"/>');
+      s.push(scat(pc,DATA,'var(--blue)','.55'));
+      s.push('<path d="'+fnPath(pc,qAt,0,56)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2" stroke-linecap="round"/>');
+      /* tangent showing the marginal effect at I */
+      var me=Q.b1+2*Q.b2*I,y0=qAt(I),L=9;
+      s.push('<line x1="'+pc.x(I-L)+'" y1="'+pc.y(y0-me*L)+'" x2="'+pc.x(I+L)+'" y2="'+pc.y(y0+me*L)+'" style="stroke:var(--coral)" stroke-width="2.6"/>');
+      s.push('<circle cx="'+pc.x(I)+'" cy="'+pc.y(y0)+'" r="6" style="fill:var(--card);stroke:var(--coral)" stroke-width="3"/>');
+      s.push('<text x="'+pc.x(I)+'" y="'+(pc.y(y0)-22)+'" text-anchor="middle" style="fill:var(--coral);font-size:12.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">slope here = '+me.toFixed(2)+'</text>');
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:'quadratic fit'},{color:'var(--amber)',label:'straight line'},{color:'var(--coral)',label:'slope at this income'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      var t2=Q.b2/Q.se2;
+      metric(1,'Marginal effect at income '+I.toFixed(1),me.toFixed(2),'β̂₁ + 2β̂₂·I, in points');
+      metric(2,'Effect at income 10',(Q.b1+2*Q.b2*10).toFixed(2),'poor district');
+      metric(3,'Effect at income 40',(Q.b1+2*Q.b2*40).toFixed(2),'rich district');
+      metric(4,'t on the squared term',t2.toFixed(2),'|t| > 1.96 ⇒ nonlinear');
+      /* follow the notes' own arithmetic: round the effect and its SE to 2 dp before forming the CI */
+      var dRaw=Q.b1+21*Q.b2, d=Math.round(dRaw*100)/100;
+      var seRaw=Math.abs(dRaw)/Math.sqrt(F_2196), se=Math.round(seRaw*100)/100;
+      chips([
+        {t:'income 10 → 11 raises the score by <b>'+d.toFixed(2)+'</b> points'},
+        {t:'SE = |Δŷ|/√F = '+se.toFixed(2)},
+        {t:'95% CI ('+(d-1.96*se).toFixed(2)+', '+(d+1.96*se).toFixed(2)+')',k:'good'},
+        {t:'R̄² = '+Q.R2adj.toFixed(2)}
+      ]);
+    }
+
+    /* ============ MODE: polynomial degree ============ */
+    function renderPoly(){
+      var r=Math.round(+degEl.value),SET=POLYSETS[pdSel.value]||POLYSETS.quad;
+      var fits=SET.fits,P=fits[r-1],D=SET.d,dom=SET.dom;
+      var pts=D.xs.map(function(x,i){return [x,D.ys[i]];});
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[0,56],dom);
+      var s=[frame(pc,[0,10,20,30,40,50],ticks(dom[0],dom[1],(dom[1]-dom[0])>90?25:10),'District income ($000)','Test score')];
+      s.push(scat(pc,pts,'var(--blue)','.5'));
+      var k;for(k=1;k<=5;k++){if(k===r)continue;
+        s.push('<path d="'+fnPath(pc,fits[k-1].at,0,56,260)+'" fill="none" style="stroke:var(--faint)" stroke-width="1.2" opacity=".34"/>');}
+      s.push('<path d="'+fnPath(pc,P.at,0,56,320)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2" stroke-linecap="round"/>');
+      /* mark inflection points of the fitted polynomial (where the second derivative changes sign) */
+      var infl=[],xq,h2=0.35,xsq=[],d2s=[],maxA=0;
+      for(xq=4;xq<=55;xq+=0.35){
+        var d2=(P.at(xq+h2)-2*P.at(xq)+P.at(xq-h2))/(h2*h2);
+        xsq.push(xq);d2s.push(d2);if(Math.abs(d2)>maxA)maxA=Math.abs(d2);
+      }
+      /* A straight line has second derivative ~1e-11, whose sign flips randomly from rounding
+         noise. Gate on the curve having real curvature at all, then require substantial
+         curvature of each sign on either side of a candidate crossing. */
+      var curvUnit=(dom[1]-dom[0])/(52*52);
+      if(maxA>0.01*curvUnit){
+        for(var q2=1;q2<d2s.length;q2++){
+          var a2=d2s[q2-1],b2=d2s[q2];
+          if(!((a2<0&&b2>0)||(a2>0&&b2<0)))continue;
+          var lMax=0,rMax=0,q3;
+          for(q3=0;q3<q2;q3++)lMax=Math.max(lMax,Math.abs(d2s[q3]));
+          for(q3=q2;q3<d2s.length;q3++)rMax=Math.max(rMax,Math.abs(d2s[q3]));
+          if(lMax>0.15*maxA&&rMax>0.15*maxA) infl.push(xsq[q2]);
+        }
+      }
+      infl.slice(0,3).forEach(function(xi){
+        s.push('<circle cx="'+pc.x(xi)+'" cy="'+pc.y(P.at(xi))+'" r="6" style="fill:var(--card);stroke:var(--coral)" stroke-width="2.6"/>');
+        s.push('<text x="'+pc.x(xi)+'" y="'+(pc.y(P.at(xi))-15)+'" text-anchor="middle" style="fill:var(--coral);font-size:11.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">inflection</text>');
+      });
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:'degree r = '+r+(infl.length?'  ·  '+infl.length+' inflection point'+(infl.length>1?'s':''):'  ·  no inflection')},
+                            {color:'var(--faint)',label:'the other degrees, for comparison'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      var sig=Math.abs(P.tTop)>1.96;
+      metric(1,'t on the highest term (X^'+r+')',P.tTop.toFixed(2),sig?'significant — keep it':'not significant — drop it');
+      metric(2,'R²',P.R2.toFixed(3),'always rises with r');
+      metric(3,'Adjusted R²',P.R2adj.toFixed(3),'penalises extra terms');
+      metric(4,'Inflection points',String(infl.length),'a cubic can have one; a line or parabola none');
+      chips(sig
+        ?[{t:'|t| = '+Math.abs(P.tTop).toFixed(2)+' > 1.96 → keep X^'+r+' and stop',k:'good'}]
+        :[{t:'|t| = '+Math.abs(P.tTop).toFixed(2)+' < 1.96 → drop X^'+r+', re-estimate at r = '+(r-1),k:'warn'}]);
+      var advice=(pdSel.value==='quad')
+        ? 'This is the notes’ own data, which is <b>genuinely quadratic</b>. That is why the cubic fit lies almost exactly on top of the quadratic and its t-statistic is tiny — there is no cubic signal to find. Switch the data to “cubic” to see a degree-3 curve that really does bend twice.'
+        : (pdSel.value==='cubic'
+          ? 'This data has a <b>real cubic component</b>. At r = 2 the parabola cannot follow it; at r = 3 an inflection point appears and the t-statistic on X³ becomes large.'
+          : 'This data needs a <b>quartic</b>. Watch the highest-term t-statistic stay significant up to r = 4, then collapse at r = 5.');
+      setHTML('nl-extra','<div class="hint" style="margin-top:8px">'+advice+'</div><div class="hint" style="margin-top:8px">Sequential rule from the notes: start at a high r, test the <b>highest</b> power, drop it if it is not significant, and repeat. Never build up from the bottom, and keep all lower-order terms whenever a higher one survives.</div>');
+    }
+
+    /* ============ MODE: logarithms ============ */
+    function renderLogs(){
+      var kind=logSel.value;
+      var lx=XS.map(function(x){return Math.log(x);}),ly=YS.map(function(y){return Math.log(y);});
+      var F,f,eqn,interp,unitNote;
+      if(kind==='linlog'){F=fit1(lx,YS);f=function(x){return F.b0+F.b1*Math.log(x);};
+        eqn='Y = β₀ + β₁·ln(X)';
+        interp='A <b>1% rise in X</b> changes Y by <b>0.01 × β̂₁ = '+(0.01*F.b1).toFixed(3)+'</b> points.';
+        unitNote='X in percent, Y in its own units';}
+      else if(kind==='loglin'){F=fit1(XS,ly);f=function(x){return Math.exp(F.b0+F.b1*x);};
+        eqn='ln(Y) = β₀ + β₁·X';
+        interp='A <b>1-unit rise in X</b> changes Y by <b>100 × β̂₁ = '+(100*F.b1).toFixed(2)+'%</b>.';
+        unitNote='X in its own units, Y in percent';}
+      else {F=fit1(lx,ly);f=function(x){return Math.exp(F.b0+F.b1*Math.log(x));};
+        eqn='ln(Y) = β₀ + β₁·ln(X)';
+        interp='β̂₁ is an <b>elasticity</b>: a 1% rise in X changes Y by <b>'+F.b1.toFixed(3)+'%</b>.';
+        unitNote='both sides in percent';}
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[0,56],[590,715]);
+      var s=[frame(pc,[0,10,20,30,40,50],[600,625,650,675,700],'District income ($000)','Test score')];
+      s.push(scat(pc,DATA,'var(--blue)','.5'));
+      if(linChk.checked)
+        s.push('<path d="'+fnPath(pc,function(x){return LIN.b0+LIN.b1*x;},0.6,56)+'" fill="none" style="stroke:var(--amber)" stroke-width="2.2" stroke-dasharray="7 5"/>');
+      s.push('<path d="'+fnPath(pc,f,0.6,56)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2" stroke-linecap="round"/>');
+      s.push(plotLegend(pc,[{color:'var(--indigo)',label:eqn},{color:'var(--amber)',label:'straight line'}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'β̂₀',F.b0.toFixed(3),'');
+      metric(2,'β̂₁',F.b1.toFixed(3),unitNote);
+      metric(3,'R² of this form',F.R2.toFixed(3),'compare only within the same LHS');
+      metric(4,'Observations',String(F.n),'same data, re-expressed');
+      setHTML('nl-extra','<div class="hint" style="margin-top:8px">'+interp+'</div>');
+      chips([{t:'the logged side is read in <b>percent</b>; the unlogged side in its own units'},
+             {t:'R² cannot be compared across Y and ln(Y)',k:'warn'}]);
+    }
+
+    /* ============ MODE: interactions ============ */
+    function renderInter(){
+      var kind=intSel.value,b3=parseFloat(b3El.value);
+      var pc,s,i;
+      if(kind==='bb'){
+        var B0=2.4,B1=1.1,B2=-0.6;
+        var cells=[['no degree, male',B0],['no degree, female',B0+B2],['degree, male',B0+B1],['degree, female',B0+B1+B2+b3]];
+        pc=makePlot(820,430,{t:34,r:34,b:64,l:70},[-0.6,3.6],[0,4.6]);
+        s=[frame(pc,[0,1,2,3],[0,1,2,3,4],'group','average earnings (Y)')];
+        cells.forEach(function(c,k){
+          var col=k<2?'var(--blue)':'var(--teal)';
+          s.push('<rect x="'+(pc.x(k)-26)+'" y="'+pc.y(c[1])+'" width="52" height="'+(pc.y(0)-pc.y(c[1]))+'" style="fill:'+col+'" fill-opacity=".5" stroke="'+col+'" stroke-width="1.5"/>');
+          s.push('<text x="'+pc.x(k)+'" y="'+(pc.y(c[1])-8)+'" text-anchor="middle" style="fill:var(--ink);font-size:12.5px;font-weight:800">'+c[1].toFixed(2)+'</text>');
+          s.push('<text x="'+pc.x(k)+'" y="'+(pc.y(0)+40)+'" text-anchor="middle" style="fill:var(--muted);font-size:11px">'+c[0]+'</text>');
+        });
+        g.innerHTML=s.join('');
+        metric(1,'Effect of a degree — men',B1.toFixed(2),'β̂₁');
+        metric(2,'Effect of a degree — women',(B1+b3).toFixed(2),'β̂₁ + β̂₃');
+        metric(3,'Difference in the effect',b3.toFixed(2),'β̂₃');
+        metric(4,'Interaction present?',Math.abs(b3)<0.03?'no':'yes',Math.abs(b3)<0.03?'β̂₃ ≈ 0':'the effect differs by group');
+        chips([{t:'β̂₃ = (effect for women) − (effect for men)'},{t:'test H₀: β₃ = 0 with an ordinary t-test'}]);
+      } else if(kind==='cb'){
+        var b0=1.0,b1=0.48,b2=0.9;
+        pc=makePlot(820,430,{t:34,r:34,b:52,l:70},[0,7.4],[0,5.4]);
+        s=[frame(pc,[0,1,2,3,4,5,6,7],[0,1,2,3,4,5],'X (years of experience)','Y (earnings)')];
+        s.push('<path d="'+fnPath(pc,function(x){return b0+b1*x;},0.2,7.2)+'" fill="none" style="stroke:var(--blue)" stroke-width="3"/>');
+        s.push('<path d="'+fnPath(pc,function(x){return b0+b2+(b1+b3)*x;},0.2,7.2)+'" fill="none" style="stroke:var(--coral)" stroke-width="3" stroke-dasharray="7 4"/>');
+        s.push('<line x1="'+pc.x(0.45)+'" y1="'+pc.y(b0+b1*0.45)+'" x2="'+pc.x(0.45)+'" y2="'+pc.y(b0+b2+(b1+b3)*0.45)+'" style="stroke:var(--amber)" stroke-width="2.6"/>');
+        s.push('<text x="'+(pc.x(0.45)+8)+'" y="'+((pc.y(b0+b1*0.45)+pc.y(b0+b2+(b1+b3)*0.45))/2)+'" style="fill:var(--amber);font-size:12px;font-weight:800">β̂₂ shift</text>');
+        s.push(plotLegend(pc,[{color:'var(--blue)',label:'D = 0  slope β̂₁ = '+b1.toFixed(2)},{color:'var(--coral)',label:'D = 1  slope β̂₁+β̂₃ = '+(b1+b3).toFixed(2)}],pc.m.l+10,pc.m.t+14));
+        g.innerHTML=s.join('');
+        metric(1,'Slope when D = 0',b1.toFixed(2),'β̂₁');
+        metric(2,'Slope when D = 1',(b1+b3).toFixed(2),'β̂₁ + β̂₃');
+        metric(3,'Intercept shift',b2.toFixed(2),'β̂₂');
+        metric(4,'Lines are',Math.abs(b3)<0.03?'parallel':'tilted',Math.abs(b3)<0.03?'β̂₃ ≈ 0 — dummy shifts only':'β̂₃ ≠ 0 — slopes differ');
+        chips([{t:'a dummy alone <b>shifts</b> the line; only the interaction can <b>tilt</b> it'},
+               {t:'∂Y/∂X = β̂₁ + β̂₃·D'}]);
+      } else {
+        var c1=0.8,c3=0.06;                     /* the notes' worked numbers */
+        pc=makePlot(820,430,{t:34,r:34,b:52,l:70},[6,20],[0,2.6]);
+        s=[frame(pc,[6,8,10,12,14,16,18,20],[0,0.5,1,1.5,2,2.5],'X₂ (years of schooling)','effect on Y of one more year of experience')];
+        s.push('<path d="'+fnPath(pc,function(x2){return c1+c3*x2;},6,20)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+        [[10,'var(--coral)'],[16,'var(--teal)']].forEach(function(m){
+          var v=c1+c3*m[0];
+          s.push('<line x1="'+pc.x(m[0])+'" y1="'+pc.y(0)+'" x2="'+pc.x(m[0])+'" y2="'+pc.y(v)+'" style="stroke:'+m[1]+'" stroke-width="2" stroke-dasharray="4 3"/>');
+          s.push('<circle cx="'+pc.x(m[0])+'" cy="'+pc.y(v)+'" r="5.4" style="fill:'+m[1]+'"/>');
+          s.push('<text x="'+pc.x(m[0])+'" y="'+(pc.y(v)-11)+'" text-anchor="middle" style="fill:'+m[1]+';font-size:12.5px;font-weight:800">'+v.toFixed(2)+'</text>');
+        });
+        g.innerHTML=s.join('');
+        metric(1,'Effect at 10 years of schooling',(c1+c3*10).toFixed(2),'β̂₁ + β̂₃·X₂');
+        metric(2,'Effect at 16 years of schooling',(c1+c3*16).toFixed(2),'β̂₁ + β̂₃·X₂');
+        metric(3,'β̂₁',c1.toFixed(2),'effect when X₂ = 0');
+        metric(4,'β̂₃',c3.toFixed(2),'how the effect grows with X₂');
+        chips([{t:'∂Y/∂X₁ = β̂₁ + β̂₃·X₂ — and symmetrically ∂Y/∂X₂ = β̂₂ + β̂₃·X₁'},
+               {t:'never run the product without both main effects',k:'warn'}]);
+      }
+    }
+
+    /* ============ MODE: measurement error ============ */
+    function renderMErr(){
+      var sw2=parseFloat(meEl.value);
+      var rng=mulberry32(4242),rn=normalGen(rng);
+      var trueB1=-2.5,trueB0=699,varX=COMMON.xSd*COMMON.xSd;
+      var pts=[],noisy=[],i;
+      for(i=0;i<90;i++){
+        var xs=clamp(COMMON.xMean+COMMON.xSd*rn(),COMMON.xLo,COMMON.xHi);
+        var y=trueB0+trueB1*xs+8*rn();
+        var xo=xs+Math.sqrt(sw2)*rn();
+        pts.push([xs,y]);noisy.push([xo,y]);
+      }
+      var fTrue=fit1(pts.map(function(d){return d[0];}),pts.map(function(d){return d[1];}));
+      var fObs =fit1(noisy.map(function(d){return d[0];}),noisy.map(function(d){return d[1];}));
+      var atten=varX/(varX+sw2);
+      var pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[8,32],[620,700]);
+      var s=[frame(pc,[10,15,20,25,30],[620,640,660,680,700],'Student–teacher ratio as measured','Test score')];
+      s.push(scat(pc,noisy,'var(--coral)','.34'));
+      s.push(scat(pc,pts,'var(--blue)','.5'));
+      s.push('<path d="'+fnPath(pc,function(x){return fTrue.b0+fTrue.b1*x;},8,32)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3"/>');
+      s.push('<path d="'+fnPath(pc,function(x){return fObs.b0+fObs.b1*x;},8,32)+'" fill="none" style="stroke:var(--coral)" stroke-width="3" stroke-dasharray="7 4"/>');
+      s.push(plotLegend(pc,[{color:'var(--blue)',label:'X measured perfectly → slope '+fTrue.b1.toFixed(2)},{color:'var(--coral)',label:'X measured with noise → slope '+fObs.b1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+      g.innerHTML=s.join('');
+      metric(1,'True slope β₁',trueB1.toFixed(2),'the parameter we want');
+      metric(2,'Slope with noisy X',fObs.b1.toFixed(2),'pulled toward zero');
+      metric(3,'Attenuation factor',atten.toFixed(3),'σ²X* / (σ²X* + σ²w)');
+      metric(4,'Predicted plim',(trueB1*atten).toFixed(2),'β₁ × attenuation factor');
+      chips([
+        {t:'error in <b>Y</b>: still unbiased, only less efficient',k:'good'},
+        {t:'error in <b>X</b>: biased <i>and</i> inconsistent',k:'bad'},
+        {t:'the bias is always <b>toward zero</b>'}
+      ]);
+    }
+
+    /* ---------------- text + control visibility ---------------- */
+    var TXT={
+      why:['Why nonlinear? A slope that changes',
+        'A straight line forces one slope everywhere. Here the same one-unit rise in X moves Y a lot at low X and barely at all at high X. No single β₁ can describe both, so the regression function itself must bend.',
+        'The second failure is different: the effect of one regressor can depend on the level of <em>another</em> regressor — that is what interactions handle.'],
+      quad:['The quadratic model — Test score and district income',
+        'Adding Income² lets the slope fall as income rises. The estimated equation from the notes is <b>T̂S = 607.3 + 3.85·Income − 0.0423·Income²</b>, and the marginal effect is <b>β̂₁ + 2β̂₂·I</b> — it depends on where you evaluate it.',
+        'The squared term carries t = −8.81, far beyond 1.96, so the nonlinearity is statistically significant.'],
+      poly:['Polynomial regression — choosing the degree',
+        'A polynomial of degree r adds X², X³, … , X^r. Because R² can never fall when a term is added, fit alone cannot choose r. The notes use <b>sequential testing from the top down</b>.',''],
+      logs:['Logarithms — percentages instead of units',
+        'Logs turn changes into percentages: Δln(X) ≈ ΔX/X. Which side carries the log decides how the coefficient is read.',''],
+      inter:['Interactions — when the slope depends on another regressor',
+        'An interaction term is the product of two regressors. It lets the effect of one variable differ by the level of the other.',''],
+      merr:['Measurement error — what mismeasuring X does',
+        'If we observe X = X* + w instead of the true X*, the compound error becomes u − β₁w, which is correlated with the regressor. OLS is then biased <b>and</b> inconsistent.','']
+    };
+    var NOTE={
+      why:'Both failures are handled the same way: keep the model linear in the parameters, and let the variables enter nonlinearly.',
+      quad:'Always report a nonlinear effect together with the point at which it was evaluated — "3.00 points at an income of 10" is a complete answer; "3.00 points" alone is not.',
+      poly:'Higher powers over a narrow range of X are also a classic source of imperfect multicollinearity, which inflates the standard errors.',
+      logs:'Choose the specification from theory, prior research and the plot — not by comparing R² across models whose dependent variables differ.',
+      inter:'A dummy on its own can only shift the line up or down. Only the interaction term can change its slope.',
+      merr:'Error in Y is a nuisance; error in X is a threat to identification. The standard remedy is a better measure — or instrumental variables (Ch. 12).'
+    };
+    function setMode(){
+      mode=scnSel.value;
+      showIf('nl-x-grp',mode==='quad');
+      showIf('nl-deg-grp',mode==='poly');
+      showIf('nl-polydata',mode==='poly');
+      showIf('nl-logtype',mode==='logs');
+      showIf('nl-intertype',mode==='inter');
+      showIf('nl-b3-grp',mode==='inter'&&intSel.value!=='cc');
+      showIf('nl-me-grp',mode==='merr');
+      showIf('nl-lin-wrap',mode==='quad'||mode==='logs');
+      var t=TXT[mode];
+      setTxt('nl-title',t[0]);setHTML('nl-desc',t[1]);
+      if(mode!=='poly'&&mode!=='logs')setHTML('nl-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('nl-note',NOTE[mode]);
+      render();
+    }
+    function render(){
+      setTxt('nl-xv',parseFloat(xEl.value).toFixed(1));
+      setTxt('nl-degv',degEl.value);
+      setTxt('nl-b3v',parseFloat(b3El.value).toFixed(2));
+      setTxt('nl-mev',meEl.value);
+      if(mode==='why')renderWhy();
+      else if(mode==='quad')renderQuad();
+      else if(mode==='poly')renderPoly();
+      else if(mode==='logs')renderLogs();
+      else if(mode==='inter')renderInter();
+      else renderMErr();
+    }
+    scnSel.addEventListener('change',setMode);
+    intSel.addEventListener('change',setMode);
+    pdSel.addEventListener('change',render);
+    [xEl,degEl,b3El,meEl,linChk,logSel].forEach(function(e){e.addEventListener('input',render);});
+    xEl.value=10;degEl.value=2;b3El.value=-0.25;meEl.value=0;
+    setMode();
+  })();
+
+  /* ===================== CH. 10 · PANEL DATA & FIXED EFFECTS ===================== */
+  (function initPanel(){
+    var NS=48,TT=7,TRUE_B1=-0.65;
+    var g=el('pn-g'),scnSel=el('pn-scn'),confEl=el('pn-conf'),dmChk=el('pn-dm');
+    var mode='cross';
+
+    /* Panel where the state effect Z_i raises BOTH the beer tax and the fatality rate,
+       so the cross-section slope comes out positive while the true within-state effect is negative. */
+    function build(conf){
+      var rng=mulberry32(1988),rn=normalGen(rng),Z=[],rows=[],i,t;
+      for(i=0;i<NS;i++)Z.push(clamp(rn(),-1.9,1.9));   /* keep the state effect bounded */
+      for(i=0;i<NS;i++)for(t=0;t<TT;t++){
+        var bt=clamp(1.15+0.50*Z[i]+0.28*rn(),0.08,2.6);
+        var fr=5.4+TRUE_B1*bt+conf*Z[i]+0.16*rn();      /* intercept keeps the rate positive */
+        rows.push({i:i,t:t,bt:bt,fr:fr});
+      }
+      return {Z:Z,rows:rows};
+    }
+    function pooled(rows){return fitXY(rows.map(function(r){return r.bt;}),rows.map(function(r){return r.fr;}));}
+    function fitXY(xs,ys){
+      var n=xs.length,i,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx;Sxy+=dx*(ys[i]-my);Sxx+=dx*dx;}
+      var b1=Sxx?Sxy/Sxx:0;return {b1:b1,b0:my-b1*mx,n:n,mx:mx,my:my};
+    }
+    /* entity-demeaned (within) estimator */
+    function feFit(rows){
+      var sx=[],sy=[],cnt=[],i;
+      for(i=0;i<NS;i++){sx.push(0);sy.push(0);cnt.push(0);}
+      rows.forEach(function(r){sx[r.i]+=r.bt;sy[r.i]+=r.fr;cnt[r.i]++;});
+      var dx=[],dy=[];
+      rows.forEach(function(r){dx.push(r.bt-sx[r.i]/cnt[r.i]);dy.push(r.fr-sy[r.i]/cnt[r.i]);});
+      return {fit:fitXY(dx,dy),dx:dx,dy:dy};
+    }
+    function scatXY(pc,xs,ys,col,op,r){
+      var s=[],i;for(i=0;i<xs.length;i++)
+        s.push('<circle cx="'+pc.x(xs[i]).toFixed(1)+'" cy="'+pc.y(ys[i]).toFixed(1)+'" r="'+(r||3.4)+'" style="fill:'+col+'" fill-opacity="'+(op||'.55')+'" stroke="#fff" stroke-width=".7"/>');
+      return s.join('');
+    }
+    function metric(i,lab,val,note){setTxt('pn-m'+i+'lab',lab);setTxt('pn-m'+i,val);setTxt('pn-m'+i+'note',note||' ');}
+    function chips(list){setHTML('pn-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+
+    function render(){
+      var conf=parseFloat(confEl.value);
+      setTxt('pn-confv',conf.toFixed(2));
+      var P=build(conf),rows=P.rows;
+      var pool=pooled(rows),FE=feFit(rows);
+      var s,pc,i;
+      /* y-axis domain follows the data so nothing is clipped when the state effect grows */
+      var frs=rows.map(function(r){return r.fr;});
+      var fLo=Math.floor(Math.min.apply(null,frs)-0.3),fHi=Math.ceil(Math.max.apply(null,frs)+0.3);
+      var fTicks=(function(){var a=[],step=(fHi-fLo)>6?2:1,v;for(v=fLo;v<=fHi;v+=step)a.push(v);return a;})();
+
+      if(mode==='cross'){
+        /* two single-year cross-sections, 1982 and 1988 */
+        var yrs=[[0,'1982','var(--blue)'],[6,'1988','var(--teal)']];
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[0,3],[fLo,fHi]);
+        s=[frame(pc,[0,0.5,1,1.5,2,2.5,3],fTicks,'Real beer tax ($)','Traffic fatality rate')];
+        yrs.forEach(function(y){
+          var r0=rows.filter(function(r){return r.t===y[0];});
+          var f=fitXY(r0.map(function(r){return r.bt;}),r0.map(function(r){return r.fr;}));
+          s.push(scatXY(pc,r0.map(function(r){return r.bt;}),r0.map(function(r){return r.fr;}),y[2],'.6'));
+          s.push('<path d="'+fnPath(pc,function(x){return f.b0+f.b1*x;},0.05,2.95)+'" fill="none" style="stroke:'+y[2]+'" stroke-width="3"/>');
+          s.push('<text x="'+pc.x(2.55)+'" y="'+pc.y(f.b0+f.b1*2.55-0.12)+'" style="fill:'+y[2]+';font-size:12px;font-weight:800">'+y[1]+': slope '+(f.b1>0?'+':'')+f.b1.toFixed(2)+'</text>');
+        });
+        g.innerHTML=s.join('');
+        var c82=fitXY(rows.filter(function(r){return r.t===0;}).map(function(r){return r.bt;}),rows.filter(function(r){return r.t===0;}).map(function(r){return r.fr;}));
+        metric(1,'True effect of the beer tax',TRUE_B1.toFixed(2),'what we want to recover');
+        metric(2,'Cross-section slope, 1982',(c82.b1>0?'+':'')+c82.b1.toFixed(2),c82.b1>0?'wrong sign':'');
+        metric(3,'Pooled OLS slope',(pool.b1>0?'+':'')+pool.b1.toFixed(2),'all states, all years');
+        metric(4,'Bias',(pool.b1-TRUE_B1>0?'+':'')+(pool.b1-TRUE_B1).toFixed(2),'from the omitted state effect');
+        chips(conf>0.15
+          ?[{t:'states with a strong drinking culture set <b>higher</b> taxes <i>and</i> have more fatalities',k:'warn'},
+            {t:'so the cross-section says higher tax → more deaths',k:'bad'}]
+          :[{t:'with the state effect switched off, the cross-section recovers the truth',k:'good'}]);
+      }
+      else if(mode==='diff'){
+        /* before-and-after: change 1982 -> 1988 for each state */
+        var dbt=[],dfr=[];
+        for(i=0;i<NS;i++){
+          var a=rows.filter(function(r){return r.i===i&&r.t===0;})[0],
+              b=rows.filter(function(r){return r.i===i&&r.t===6;})[0];
+          dbt.push(b.bt-a.bt);dfr.push(b.fr-a.fr);
+        }
+        var fd=fitXY(dbt,dfr);
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[-1.4,1.4],[-1.2,1.2]);
+        s=[frame(pc,[-1.5,-1,-0.5,0,0.5,1,1.5],[-1,-0.5,0,0.5,1],'Change in beer tax, 1982 → 1988','Change in fatality rate')];
+        s.push('<line x1="'+pc.x(-1.4)+'" y1="'+pc.y(0)+'" x2="'+pc.x(1.4)+'" y2="'+pc.y(0)+'" style="stroke:var(--axis)" stroke-width="1" stroke-dasharray="3 3"/>');
+        s.push('<line x1="'+pc.x(0)+'" y1="'+pc.y(-1.2)+'" x2="'+pc.x(0)+'" y2="'+pc.y(1.2)+'" style="stroke:var(--axis)" stroke-width="1" stroke-dasharray="3 3"/>');
+        s.push(scatXY(pc,dbt,dfr,'var(--indigo)','.62',4));
+        s.push('<path d="'+fnPath(pc,function(x){return fd.b0+fd.b1*x;},-1.35,1.35)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+        s.push('<path d="'+fnPath(pc,function(x){return TRUE_B1*x;},-1.35,1.35)+'" fill="none" style="stroke:var(--teal)" stroke-width="2" stroke-dasharray="6 4"/>');
+        s.push(plotLegend(pc,[{color:'var(--indigo)',label:'differenced fit: slope '+fd.b1.toFixed(2)},{color:'var(--teal)',label:'true effect '+TRUE_B1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+        g.innerHTML=s.join('');
+        metric(1,'Differenced slope',fd.b1.toFixed(2),'ΔFR on ΔBT');
+        metric(2,'True effect',TRUE_B1.toFixed(2),'recovered');
+        metric(3,'Pooled OLS (for contrast)',(pool.b1>0?'+':'')+pool.b1.toFixed(2),'still contaminated');
+        metric(4,'States differenced',String(NS),'each contributes one point');
+        chips([{t:'β₀ and the state effect β₂Z<sub>i</sub> both <b>cancel</b> when we subtract',k:'good'},
+               {t:'works only for T = 2 — with more periods there is no single before and after',k:'warn'}]);
+      }
+      else if(mode==='fe'){
+        var useDm=dmChk.checked;
+        if(useDm){
+          pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[-1.1,1.1],[-0.9,0.9]);
+          s=[frame(pc,[-1,-0.5,0,0.5,1],[-0.5,0,0.5],'Beer tax, deviation from the state mean','Fatality rate, deviation from the state mean')];
+          s.push(scatXY(pc,FE.dx,FE.dy,'var(--indigo)','.5',3.2));
+          s.push('<path d="'+fnPath(pc,function(x){return FE.fit.b1*x;},-1.05,1.05)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+          s.push(plotLegend(pc,[{color:'var(--indigo)',label:'within-state slope '+FE.fit.b1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+        } else {
+          pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[0,3],[fLo,fHi]);
+          s=[frame(pc,[0,0.5,1,1.5,2,2.5,3],fTicks,'Real beer tax ($)','Traffic fatality rate')];
+          /* draw a handful of states, each its own colour, with its own within-state line */
+          var show=[3,11,19,27,35,43],cols=['var(--blue)','var(--teal)','var(--coral)','var(--amber)','var(--indigo)','#7a1f3d'];
+          show.forEach(function(si,k){
+            var rs=rows.filter(function(r){return r.i===si;});
+            var f=fitXY(rs.map(function(r){return r.bt;}),rs.map(function(r){return r.fr;}));
+            s.push(scatXY(pc,rs.map(function(r){return r.bt;}),rs.map(function(r){return r.fr;}),cols[k],'.75',4));
+            var lo=Math.min.apply(null,rs.map(function(r){return r.bt;})),hi=Math.max.apply(null,rs.map(function(r){return r.bt;}));
+            s.push('<path d="'+fnPath(pc,function(x){return f.b0+f.b1*x;},lo,hi)+'" fill="none" style="stroke:'+cols[k]+'" stroke-width="2.6"/>');
+          });
+          s.push('<path d="'+fnPath(pc,function(x){return pool.b0+pool.b1*x;},0.05,2.95)+'" fill="none" style="stroke:var(--faint)" stroke-width="3" stroke-dasharray="7 5"/>');
+          s.push(plotLegend(pc,[{color:'var(--faint)',label:'pooled OLS across states: '+(pool.b1>0?'+':'')+pool.b1.toFixed(2)+' (upward)'},{color:'var(--indigo)',label:'within each state the slope is negative'}],pc.m.l+10,pc.m.t+14));
+        }
+        g.innerHTML=s.join('');
+        metric(1,'Fixed effects estimate',FE.fit.b1.toFixed(2),'entity-demeaned');
+        metric(2,'True effect',TRUE_B1.toFixed(2),'target');
+        metric(3,'Pooled OLS',(pool.b1>0?'+':'')+pool.b1.toFixed(2),'ignores the state effect');
+        metric(4,'Observations',String(NS*TT),NS+' states × '+TT+' years');
+        chips([{t:'each state gets its own intercept α<sub>i</sub> — '+NS+' of them, absorbed not estimated'},
+               {t:'the demeaned fit and the (n−1) dummy regression give the <b>same</b> β̂₁',k:'good'}]);
+      }
+      else {
+        /* time fixed effects: a national shock common to all states in a year */
+        pc=makePlot(820,430,{t:34,r:34,b:52,l:66},[-0.5,6.5],[fLo,fHi]);
+        s=[frame(pc,[0,1,2,3,4,5,6],fTicks,'Year (0 = 1982 … 6 = 1988)','Average fatality rate')];
+        var means=[],k;
+        for(k=0;k<TT;k++){
+          var rk=rows.filter(function(r){return r.t===k;});
+          means.push(rk.reduce(function(a,r){return a+r.fr;},0)/rk.length);
+        }
+        s.push('<path d="'+means.map(function(m,k2){return (k2?'L':'M')+pc.x(k2).toFixed(1)+','+pc.y(m).toFixed(1);}).join('')+'" fill="none" style="stroke:var(--amber)" stroke-width="3"/>');
+        means.forEach(function(m,k2){
+          s.push('<circle cx="'+pc.x(k2)+'" cy="'+pc.y(m)+'" r="5.4" style="fill:var(--amber)"/>');
+          s.push('<line x1="'+pc.x(k2)+'" y1="'+pc.y(m)+'" x2="'+pc.x(k2)+'" y2="'+pc.y(fLo)+'" style="stroke:var(--amber)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>');
+        });
+        s.push('<text x="'+(pc.m.l+12)+'" y="'+(pc.m.t+16)+'" style="fill:var(--muted);font-size:12.5px">each year gets its own intercept η<sub>t</sub> — T − 1 = '+(TT-1)+' time dummies</text>');
+        g.innerHTML=s.join('');
+        metric(1,'Time dummies needed',String(TT-1),'T − 1, to avoid the dummy trap');
+        metric(2,'Entity dummies needed',String(NS-1),'n − 1, for the same reason');
+        metric(3,'FE estimate (entity)',FE.fit.b1.toFixed(2),'within-state');
+        metric(4,'True effect',TRUE_B1.toFixed(2),'target');
+        chips([{t:'time effects absorb anything national in a given year — a federal tariff, a nationwide campaign'},
+               {t:'entity + time together still cannot remove a factor that varies across <b>both</b>',k:'warn'},
+               {t:'that is the gap instrumental variables fill (Ch. 12)'}]);
+      }
+    }
+
+    var TXT={
+      cross:['The cross-section trap',
+        'Compare states in a single year and the beer tax looks <b>deadly</b>: the fitted line slopes upward in both 1982 and 1988. The reason is an omitted variable — a state’s culture of drinking and driving raises fatalities <i>and</i> goes with a higher tax.',
+        'Slide the state effect down to zero and the upward slope disappears: the bias, not the tax, was doing the work.'],
+      diff:['Before and after — differencing (T = 2)',
+        'Write the model for 1982 and for 1988 and subtract. The intercept and the entire unobserved state effect β₂Z<sub>i</sub> cancel, because they are the same in both years. What remains is a regression of the <b>change</b> in fatalities on the <b>change</b> in the tax.',''],
+      fe:['Entity fixed effects (T > 2)',
+        'Collapse β₀ + β₂Z<sub>i</sub> into a single state intercept α<sub>i</sub>. Every state is then compared only with itself over time — either by including n − 1 state dummies, or by subtracting each state’s own mean from its data. Both give the identical β̂₁.',''],
+      time:['Time fixed effects',
+        'Some omitted factors are the same for every state in a year but change year to year — a national tariff, a federal safety campaign. Adding T − 1 year dummies absorbs them, exactly as entity dummies absorb what is fixed within a state.','']
+    };
+    var NOTE={
+      cross:'A bigger cross-section does not help: more states measured the same way converge more precisely on the wrong number.',
+      diff:'Clean and intuitive, but only defined for two periods. With T > 2 the same idea is carried out by fixed effects.',
+      fe:'Fixed effects remove what is constant within a state, however unobservable — that is the whole point. They do nothing about factors that change over time within a state.',
+      time:'Entity and time fixed effects together handle omitted variables that vary across entities or across time — but not one that varies across both.'
+    };
+    function setMode(){
+      mode=scnSel.value;
+      showIf('pn-dm-wrap',mode==='fe');
+      var t=TXT[mode];setTxt('pn-title',t[0]);setHTML('pn-desc',t[1]);
+      setHTML('pn-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('pn-note',NOTE[mode]);
+      render();
+    }
+    scnSel.addEventListener('change',setMode);
+    [confEl,dmChk].forEach(function(e){e.addEventListener('input',render);});
+    confEl.value=1.05;
+    setMode();
+  })();
+
+  /* ===================== CH. 11 · BINARY DEPENDENT VARIABLE ===================== */
+  (function initBin(){
+    var g=el('bn-g'),scnSel=el('bn-scn'),b0El=el('bn-b0'),b1El=el('bn-b1'),xEl=el('bn-x');
+    var mode='lpm';
+    /* illustrative binary sample: Y = 1 if a latent index crosses zero */
+    var DATA=(function(){
+      var rng=mulberry32(1111),rn=normalGen(rng),d=[],i;
+      for(i=0;i<90;i++){var x=10*rng();var z=-2+0.4*x+rn();d.push([x,z>=0?1:0]);}
+      return d;
+    })();
+    function metric(i,lab,val,note){setTxt('bn-m'+i+'lab',lab);setTxt('bn-m'+i,val);setTxt('bn-m'+i+'note',note||' ');}
+    function chips(list){setHTML('bn-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+    function dots(pc,col){
+      var s=[],i;for(i=0;i<DATA.length;i++)
+        s.push('<circle cx="'+pc.x(DATA[i][0]).toFixed(1)+'" cy="'+pc.y(DATA[i][1]).toFixed(1)+'" r="3.6" style="fill:'+col+'" fill-opacity=".45" stroke="#fff" stroke-width=".7"/>');
+      return s.join('');
+    }
+    function render(){
+      var b0=parseFloat(b0El.value),b1=parseFloat(b1El.value),X=parseFloat(xEl.value);
+      setTxt('bn-b0v',b0.toFixed(1));setTxt('bn-b1v',b1.toFixed(2));setTxt('bn-xv',X.toFixed(1));
+      var z=b0+b1*X,pc,s;
+
+      if(mode==='lpm'){
+        var xs=DATA.map(function(d){return d[0];}),ys=DATA.map(function(d){return d[1];});
+        var n=xs.length,i,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+        var mx=sx/n,my=sy/n,Sxy=0,Sxx=0;
+        for(i=0;i<n;i++){var dx=xs[i]-mx;Sxy+=dx*(ys[i]-my);Sxx+=dx*dx;}
+        var L1=Sxy/Sxx,L0=my-L1*mx;
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[0,10],[-0.3,1.3]);
+        s=[frame(pc,[0,2,4,6,8,10],[0,0.5,1],'X','Pr(Y = 1 | X)')];
+        s.push('<rect x="'+pc.x(0)+'" y="'+pc.y(1)+'" width="'+(pc.x(10)-pc.x(0))+'" height="'+(pc.y(0)-pc.y(1))+'" style="fill:var(--teal)" fill-opacity=".05"/>');
+        [0,1].forEach(function(v){s.push('<line x1="'+pc.x(0)+'" y1="'+pc.y(v)+'" x2="'+pc.x(10)+'" y2="'+pc.y(v)+'" style="stroke:var(--teal)" stroke-width="1.4" stroke-dasharray="5 4" opacity=".8"/>');});
+        s.push(dots(pc,'var(--blue)'));
+        s.push('<path d="'+fnPath(pc,function(x){return L0+L1*x;},0,10)+'" fill="none" style="stroke:var(--coral)" stroke-width="3.2"/>');
+        var outLo=(L0<0),outHi=(L0+L1*10>1);
+        s.push(plotLegend(pc,[{color:'var(--coral)',label:'linear probability model'},{color:'var(--teal)',label:'the admissible band 0 to 1'}],pc.m.l+10,pc.m.t+14));
+        g.innerHTML=s.join('');
+        metric(1,'Fitted Pr at X = 0',(L0).toFixed(2),outLo?'below 0 — impossible':'inside [0,1]');
+        metric(2,'Fitted Pr at X = 10',(L0+L1*10).toFixed(2),outHi?'above 1 — impossible':'inside [0,1]');
+        metric(3,'Marginal effect',L1.toFixed(3),'constant — the same everywhere');
+        var P=Math.min(0.999,Math.max(0.001,L0+L1*X));
+        metric(4,'Var(Y) at X = '+X.toFixed(1),(P*(1-P)).toFixed(3),'P(1−P) — changes with X');
+        chips([
+          (outLo||outHi)?{t:'the fitted line leaves [0, 1] — a meaningless probability',k:'bad'}:{t:'fitted values happen to stay inside [0, 1] here',k:'good'},
+          {t:'Var(Y) = P(1−P) depends on X ⇒ <b>heteroskedastic by construction</b>',k:'warn'}
+        ]);
+      }
+      else if(mode==='curve'){
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[-4,4],[-0.12,1.12]);
+        s=[frame(pc,[-4,-2,0,2,4],[0,0.5,1],'index  z = β₀ + β₁X','Pr(Y = 1)')];
+        [0,1].forEach(function(v){s.push('<line x1="'+pc.x(-4)+'" y1="'+pc.y(v)+'" x2="'+pc.x(4)+'" y2="'+pc.y(v)+'" style="stroke:var(--faint)" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>');});
+        s.push('<path d="'+fnPath(pc,function(x){return 0.5+0.32*x;},-1.4,1.6)+'" fill="none" style="stroke:var(--amber)" stroke-width="2.6" stroke-dasharray="7 4"/>');
+        s.push('<path d="'+fnPath(pc,function(x){return normCdf(x);},-4,4)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+        s.push('<path d="'+fnPath(pc,function(x){return logistic(x);},-4,4)+'" fill="none" style="stroke:var(--teal)" stroke-width="2.6" stroke-dasharray="6 4"/>');
+        s.push(plotLegend(pc,[{color:'var(--indigo)',label:'probit — normal CDF Φ(z)'},{color:'var(--teal)',label:'logit — logistic CDF'},{color:'var(--amber)',label:'linear probability model'}],pc.m.l+10,pc.m.t+14));
+        g.innerHTML=s.join('');
+        metric(1,'Φ(z) at z = '+z.toFixed(2),normCdf(z).toFixed(3),'probit probability');
+        metric(2,'Logistic at z = '+z.toFixed(2),logistic(z).toFixed(3),'logit probability');
+        metric(3,'Largest gap between them',(function(){var m=0,x;for(x=-4;x<=4;x+=0.02)m=Math.max(m,Math.abs(normCdf(x)-logistic(x)));return m.toFixed(3);})(),'over the whole index range');
+        metric(4,'Both bounded in',' [0, 1] ','a CDF cannot leave it');
+        chips([{t:'both are S-shaped and never leave [0, 1]',k:'good'},
+               {t:'the logistic has slightly heavier tails; fitted probabilities are almost identical in practice'}]);
+      }
+      else if(mode==='me'){
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:66},[0,10],[-0.12,1.12]);
+        s=[frame(pc,[0,2,4,6,8,10],[0,0.5,1],'X','Pr(Y = 1 | X)')];
+        s.push(dots(pc,'var(--blue)'));
+        s.push('<path d="'+fnPath(pc,function(x){return normCdf(b0+b1*x);},0,10)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+        var p=normCdf(z),me=b1*normPdf(z,0,1),L=1.5;
+        s.push('<line x1="'+pc.x(X-L)+'" y1="'+pc.y(p-me*L)+'" x2="'+pc.x(X+L)+'" y2="'+pc.y(p+me*L)+'" style="stroke:var(--coral)" stroke-width="2.8"/>');
+        s.push('<circle cx="'+pc.x(X)+'" cy="'+pc.y(p)+'" r="6" style="fill:var(--card);stroke:var(--coral)" stroke-width="3"/>');
+        s.push('<text x="'+pc.x(X)+'" y="'+(pc.y(p)-20)+'" text-anchor="middle" style="fill:var(--coral);font-size:12.5px;font-weight:800;stroke:var(--card);stroke-width:3.5;paint-order:stroke">slope = '+me.toFixed(3)+'</text>');
+        g.innerHTML=s.join('');
+        metric(1,'Index z = β̂₀ + β̂₁X',z.toFixed(2),'at X = '+X.toFixed(1));
+        metric(2,'Pr(Y = 1 | X)',(100*p).toFixed(1)+'%','Φ(z)');
+        metric(3,'Marginal effect',me.toFixed(3),'β̂₁ · φ(z)');
+        metric(4,'Largest possible effect',(b1*normPdf(0,0,1)).toFixed(3),'at z = 0, i.e. Pr = 50%');
+        chips([
+          {t:'worked example from the notes: β̂₀ = −2, β̂₁ = 0.4, X = 3 → z = −0.8 → Φ(−0.8) = '+(100*normCdf(-0.8)).toFixed(1)+'%'},
+          {t:'φ(z) ≥ 0, so the <b>sign</b> of the effect is the sign of β̂₁ — but its <b>size</b> depends on X',k:'warn'}
+        ]);
+      }
+      else {
+        /* latent variable + log-likelihood */
+        pc=makePlot(820,430,{t:34,r:34,b:52,l:66},[0.02,1.5],[-95,-40]);
+        var xs2=DATA.map(function(d){return d[0];}),ys2=DATA.map(function(d){return d[1];});
+        function LL(bb1){var s2=0,i;for(i=0;i<xs2.length;i++){
+          var pi=Math.min(0.9999,Math.max(0.0001,normCdf(b0+bb1*xs2[i])));
+          s2+=ys2[i]*Math.log(pi)+(1-ys2[i])*Math.log(1-pi);}return s2;}
+        var best=0.05,bv=-1e9,q;
+        for(q=0.05;q<=1.5;q+=0.005){var v=LL(q);if(v>bv){bv=v;best=q;}}
+        s=[frame(pc,[0.25,0.5,0.75,1,1.25,1.5],[-90,-80,-70,-60,-50,-40],'candidate β₁','log-likelihood')];
+        s.push('<path d="'+fnPath(pc,LL,0.05,1.5,200)+'" fill="none" style="stroke:var(--indigo)" stroke-width="3.2"/>');
+        s.push('<line x1="'+pc.x(best)+'" y1="'+pc.y(-95)+'" x2="'+pc.x(best)+'" y2="'+pc.y(bv)+'" style="stroke:var(--teal)" stroke-width="2.4" stroke-dasharray="5 4"/>');
+        s.push('<circle cx="'+pc.x(best)+'" cy="'+pc.y(bv)+'" r="6" style="fill:var(--teal)"/>');
+        s.push('<text x="'+pc.x(best)+'" y="'+(pc.y(bv)-14)+'" text-anchor="middle" style="fill:var(--teal);font-size:12.5px;font-weight:800">MLE β̂₁ = '+best.toFixed(2)+'</text>');
+        var cur=LL(b1);
+        s.push('<circle cx="'+pc.x(b1)+'" cy="'+pc.y(Math.max(-95,cur))+'" r="5.4" style="fill:var(--coral)"/>');
+        s.push('<text x="'+pc.x(b1)+'" y="'+(pc.y(Math.max(-95,cur))+20)+'" text-anchor="middle" style="fill:var(--coral);font-size:12px;font-weight:700">your β₁</text>');
+        g.innerHTML=s.join('');
+        metric(1,'Log-likelihood at your β₁',cur.toFixed(1),'always negative');
+        metric(2,'Maximum log-likelihood',bv.toFixed(1),'at β̂₁ = '+best.toFixed(2));
+        metric(3,'Distance from the maximum',(bv-cur).toFixed(1),'0 means you found it');
+        metric(4,'Latent rule','Z ≥ 0','Y = 1 when the index crosses 0');
+        chips([{t:'every term is a log of a probability, so the log-likelihood is <b>always ≤ 0</b>'},
+               {t:'maximising means pushing it <b>up toward zero</b>'},
+               {t:'OLS cannot be used: Φ(β₀+β₁X) is nonlinear in the parameters',k:'warn'}]);
+      }
+    }
+    var TXT={
+      lpm:['The linear probability model',
+        'Regress a 0/1 outcome on X with ordinary OLS and the fitted value reads as Pr(Y = 1 | X). It is easy to estimate and easy to interpret — β̂₁ is the change in probability — but a straight line is not bounded.',''],
+      curve:['Probit and logit — running the index through a CDF',
+        'Both models take the same linear index z = β₀ + β₁X and pass it through a cumulative distribution function, which is bounded between 0 and 1 by definition. Probit uses the standard normal CDF Φ, logit the logistic CDF.',''],
+      me:['Marginal effects — one model, many slopes',
+        'For probit, ∂Pr/∂X = β̂₁·φ(z). Because φ is the normal density, the effect is largest where the predicted probability is near 50% and shrinks toward zero at both extremes.',''],
+      mle:['Latent variable and maximum likelihood',
+        'Think of an unobserved index Z = β₀ + β₁X + u, with Y = 1 exactly when Z ≥ 0. Then Pr(Y = 1|X) = CDF(β₀ + β₁X). The coefficients are chosen to maximise the log-likelihood — the value that makes the observed pattern of ones and zeros most probable.','']
+    };
+    var NOTE={
+      lpm:'The LPM remains useful as a quick, easily interpreted first look — just do not trust its predictions near the ends of the X range.',
+      curve:'Probit and logit almost always give very similar fitted probabilities; the choice between them rarely changes a conclusion.',
+      me:'Always report a marginal effect together with the X at which it was evaluated — exactly the discipline the quadratic model demanded in Ch. 8.',
+      mle:'Under normality, maximum likelihood and OLS coincide for a linear regression; for probit and logit only maximum likelihood is available.'
+    };
+    function setMode(){
+      mode=scnSel.value;
+      showIf('bn-b0-grp',mode!=='lpm');
+      showIf('bn-b1-grp',mode!=='lpm');
+      showIf('bn-x-grp',mode==='lpm'||mode==='curve'||mode==='me');
+      var t=TXT[mode];setTxt('bn-title',t[0]);setHTML('bn-desc',t[1]);
+      setHTML('bn-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('bn-note',NOTE[mode]);
+      render();
+    }
+    scnSel.addEventListener('change',setMode);
+    [b0El,b1El,xEl].forEach(function(e){e.addEventListener('input',render);});
+    b0El.value=-2;b1El.value=0.4;xEl.value=3;
+    setMode();
+  })();
+
+  /* ===================== CH. 12 · INSTRUMENTAL VARIABLES ===================== */
+  (function initIV(){
+    var g=el('iv-g'),scnSel=el('iv-scn'),eEl=el('iv-e'),sEl=el('iv-s');
+    var mode='endog',TRUE_B1=-2.5;
+    function metric(i,lab,val,note){setTxt('iv-m'+i+'lab',lab);setTxt('iv-m'+i,val);setTxt('iv-m'+i+'note',note||' ');}
+    function chips(list){setHTML('iv-chips',list.map(function(c){return '<span class="statchip '+(c.k||'')+'">'+c.t+'</span>';}).join(''));}
+    function fitXY(xs,ys){
+      var n=xs.length,i,sx=0,sy=0;for(i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+      var mx=sx/n,my=sy/n,Sxy=0,Sxx=0,Syy=0;
+      for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;Sxy+=dx*dy;Sxx+=dx*dx;Syy+=dy*dy;}
+      var b1=Sxx?Sxy/Sxx:0;
+      return {b1:b1,b0:my-b1*mx,Sxx:Sxx,Sxy:Sxy,Syy:Syy,mx:mx,my:my,n:n,R2:Sxx&&Syy?(Sxy*Sxy)/(Sxx*Syy):0};
+    }
+    /* one sample: Z -> X, u confounds X and Y */
+    function sample(rho,strength,seed){
+      var rng=mulberry32(seed||77),rn=normalGen(rng),Z=[],X=[],Y=[],i;
+      var a=Math.sqrt(Math.max(0,1-rho*rho));
+      for(i=0;i<120;i++){
+        var z=rn(),u=rn();
+        var x=19.6+2.3*(strength*z+rho*u+0.55*a*rn());
+        var y=699+TRUE_B1*x+8*u;
+        Z.push(z);X.push(x);Y.push(y);
+      }
+      return {Z:Z,X:X,Y:Y};
+    }
+    function ivEst(S){
+      var fs=fitXY(S.Z,S.X);                       /* first stage */
+      var Xh=S.Z.map(function(z){return fs.b0+fs.b1*z;});
+      var ss=fitXY(Xh,S.Y);                        /* second stage */
+      return {first:fs,second:ss,Xhat:Xh};
+    }
+    function scatXY(pc,xs,ys,col,op,r){
+      var s=[],i;for(i=0;i<xs.length;i++)
+        s.push('<circle cx="'+pc.x(xs[i]).toFixed(1)+'" cy="'+pc.y(ys[i]).toFixed(1)+'" r="'+(r||3.4)+'" style="fill:'+col+'" fill-opacity="'+(op||'.5')+'" stroke="#fff" stroke-width=".7"/>');
+      return s.join('');
+    }
+    function node(x,y,w,h,label,col,fill){
+      return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="9" style="fill:'+(fill||'var(--card)')+';stroke:'+col+'" stroke-width="2.2"/>'+
+             '<text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" class="pathnode" style="fill:'+col+'">'+label+'</text>';
+    }
+    function arrow(x1,y1,x2,y2,col,dash,label,lx,ly){
+      var s='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" style="stroke:'+col+'" stroke-width="2.4"'+(dash?' stroke-dasharray="6 4"':'')+' marker-end="url(#ivarrow)"/>';
+      if(label)s+='<text x="'+(lx!=null?lx:(x1+x2)/2)+'" y="'+(ly!=null?ly:(y1+y2)/2-7)+'" text-anchor="middle" class="pathlbl" style="fill:'+col+'">'+label+'</text>';
+      return s;
+    }
+    function render(){
+      var rho=parseFloat(eEl.value),str=parseFloat(sEl.value);
+      setTxt('iv-ev',rho.toFixed(2));setTxt('iv-sv',str.toFixed(2));
+      var S=sample(rho,str),ols1=fitXY(S.X,S.Y),IV=ivEst(S);
+      var pc,s;
+
+      if(mode==='endog'){
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[12,28],[620,700]);
+        s=[frame(pc,[12,16,20,24,28],[620,640,660,680,700],'X (student–teacher ratio)','Y (test score)')];
+        s.push(scatXY(pc,S.X,S.Y,'var(--blue)','.5'));
+        s.push('<path d="'+fnPath(pc,function(x){return ols1.b0+ols1.b1*x;},12,28)+'" fill="none" style="stroke:var(--coral)" stroke-width="3.2"/>');
+        s.push('<path d="'+fnPath(pc,function(x){return (699+TRUE_B1*19.6)-TRUE_B1*19.6+TRUE_B1*x;},12,28)+'" fill="none" style="stroke:var(--teal)" stroke-width="2.6" stroke-dasharray="7 4"/>');
+        s.push(plotLegend(pc,[{color:'var(--coral)',label:'OLS slope '+ols1.b1.toFixed(2)},{color:'var(--teal)',label:'true β₁ = '+TRUE_B1.toFixed(2)}],pc.m.l+10,pc.m.t+14));
+        g.innerHTML=s.join('');
+        metric(1,'True β₁',TRUE_B1.toFixed(2),'the causal effect');
+        metric(2,'OLS estimate',ols1.b1.toFixed(2),rho>0.05?'contaminated':'clean');
+        metric(3,'Bias',(ols1.b1-TRUE_B1>0?'+':'')+(ols1.b1-TRUE_B1).toFixed(2),'Cov(X,u)/Var(X)');
+        metric(4,'Corr(X, u)',rho.toFixed(2),rho>0.05?'X is endogenous':'X is exogenous');
+        chips(rho>0.05
+          ?[{t:'E(u|X) ≠ 0, so OLS is biased — and stays biased however large n gets',k:'bad'}]
+          :[{t:'with Corr(X,u) = 0 OLS is unbiased and there is nothing to fix',k:'good'}]);
+      }
+      else if(mode==='valid'){
+        pc=makePlot(820,430,{t:20,r:20,b:20,l:20},[0,820],[0,430]);
+        s=['<defs><marker id="ivarrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>'];
+        var relOK=str>=0.25, exoOK=true;
+        var yZ=215,yU=95,yMid=215;
+        s.push(node(130,yZ,120,54,'Z  instrument','var(--teal)'));
+        s.push(node(410,yMid,120,54,'X  regressor','var(--blue)'));
+        s.push(node(690,yMid,120,54,'Y  outcome','var(--indigo)'));
+        s.push(node(550,yU,150,48,'u  unobserved','var(--coral)','var(--sq-fill)'));
+        s.push(arrow(192,yZ,348,yMid,relOK?'var(--teal)':'var(--faint)',!relOK,relOK?'relevance: Corr(Z,X) ≠ 0':'too weak — nothing to work with',270,yZ-14));
+        s.push(arrow(472,yMid,628,yMid,'var(--blue)',false,'β₁ — the effect we want',550,yMid-14));
+        s.push(arrow(512,yU+18,432,yMid-30,'var(--coral)',true,null));
+        s.push(arrow(588,yU+18,668,yMid-30,'var(--coral)',true,null));
+        s.push('<text x="550" y="150" text-anchor="middle" class="pathlbl" style="fill:var(--coral)">u confounds X and Y</text>');
+        /* forbidden direct path Z -> Y */
+        s.push('<path d="M 130 '+(yZ+34)+' Q 410 400 690 '+(yMid+34)+'" fill="none" style="stroke:var(--faint)" stroke-width="2" stroke-dasharray="7 5"/>');
+        s.push('<text x="410" y="392" text-anchor="middle" class="pathlbl" style="fill:var(--faint)">exogeneity: there must be NO direct path Z → Y</text>');
+        g.innerHTML=s.join('');
+        metric(1,'First-stage strength',str.toFixed(2),relOK?'relevant':'weak instrument');
+        metric(2,'Corr(Z, X)',(IV.first.R2>0?Math.sqrt(IV.first.R2).toFixed(2):'0.00'),'must be ≠ 0 — testable');
+        metric(3,'Corr(Z, u)','0 by design','must be 0 — an assumption');
+        metric(4,'Instrument is',relOK?'usable':'too weak',relOK?'both conditions met':'relevance fails');
+        chips([{t:'relevance is <b>testable</b> from the first stage',k:'good'},
+               {t:'exogeneity is <b>not testable</b> — u is never observed, so it must be argued from economics',k:'warn'}]);
+      }
+      else if(mode==='tsls'){
+        pc=makePlot(820,430,{t:30,r:34,b:52,l:70},[-3,3],[12,28]);
+        s=[frame(pc,[-3,-2,-1,0,1,2,3],[12,16,20,24,28],'Z (the instrument)','X (the regressor)')];
+        s.push(scatXY(pc,S.Z,S.X,'var(--blue)','.45'));
+        s.push('<path d="'+fnPath(pc,function(z){return IV.first.b0+IV.first.b1*z;},-3,3)+'" fill="none" style="stroke:var(--teal)" stroke-width="3.2"/>');
+        s.push('<text x="'+(pc.m.l+12)+'" y="'+(pc.m.t+16)+'" style="fill:var(--teal);font-size:12.5px;font-weight:800">Stage 1: X on Z — the fitted X̂ is the part of X unrelated to u</text>');
+        s.push('<text x="'+(pc.m.l+12)+'" y="'+(pc.m.t+34)+'" style="fill:var(--indigo);font-size:12.5px;font-weight:800">Stage 2: Y on X̂ → β̂₁ = '+IV.second.b1.toFixed(2)+'</text>');
+        g.innerHTML=s.join('');
+        metric(1,'True β₁',TRUE_B1.toFixed(2),'target');
+        metric(2,'OLS estimate',ols1.b1.toFixed(2),'biased when X is endogenous');
+        metric(3,'2SLS estimate',IV.second.b1.toFixed(2),'uses only Z-driven variation');
+        metric(4,'First-stage R²',IV.first.R2.toFixed(3),'how much of X the instrument explains');
+        chips([{t:'β̂₁<sup>IV</sup> = Cov(Y,Z) / Cov(X,Z) — the second X is replaced by Z'},
+               {t:'both stages are ordinary OLS, which is where the name comes from'}]);
+      }
+      else {
+        /* sampling distributions of OLS vs IV across many samples */
+        var olsB=[],ivB=[],k;
+        for(k=0;k<400;k++){
+          var Sk=sample(rho,str,5000+k);
+          olsB.push(fitXY(Sk.X,Sk.Y).b1);
+          ivB.push(ivEst(Sk).second.b1);
+        }
+        var so=statOf(olsB),si=statOf(ivB);
+        var lo=Math.min(TRUE_B1-3,si.mean-3*si.sd),hi=Math.max(TRUE_B1+3,so.mean+3*so.sd);
+        var nb=44,binW=(hi-lo)/nb;
+        var dO=densOf(olsB,lo,hi,nb),dI=densOf(ivB,lo,hi,nb);
+        var yMax=0;for(k=0;k<nb;k++){yMax=Math.max(yMax,dO[k],dI[k]);}
+        pc=makePlot(820,430,{t:52,r:34,b:52,l:66},[lo,hi],[0,yMax*1.15]);
+        s=[axis(pc,lo,hi,'estimate of β₁ across 400 samples',function(v){return v.toFixed(1);})];
+        s.push(bars(pc,dO,lo,binW,'var(--coral)','.45'));
+        s.push(bars(pc,dI,lo,binW,'var(--teal)','.45'));
+        s.push(vline(pc,TRUE_B1,'var(--ink)',false,'true β₁ = '+TRUE_B1.toFixed(2),pc.m.t-30));
+        s.push(vline(pc,so.mean,'var(--coral)',true,'mean OLS '+so.mean.toFixed(2),pc.m.t-14));
+        s.push(vline(pc,si.mean,'var(--teal)',true,'mean IV '+si.mean.toFixed(2),pc.m.t+2));
+        s.push(plotLegend(pc,[{color:'var(--coral)',label:'OLS — precise but biased'},{color:'var(--teal)',label:'IV — centred but noisier'}],pc.m.l+10,pc.m.t+16));
+        g.innerHTML=s.join('');
+        metric(1,'Mean OLS estimate',so.mean.toFixed(2),'bias '+(so.mean-TRUE_B1>0?'+':'')+(so.mean-TRUE_B1).toFixed(2));
+        metric(2,'Mean IV estimate',si.mean.toFixed(2),'bias '+(si.mean-TRUE_B1>0?'+':'')+(si.mean-TRUE_B1).toFixed(2));
+        metric(3,'SD of OLS',so.sd.toFixed(3),'tight');
+        metric(4,'SD of IV',si.sd.toFixed(3),(si.sd/so.sd).toFixed(1)+'× wider');
+        chips([{t:'IV is centred on the truth but always <b>less precise</b>: Var(β̂<sup>IV</sup>) = σ²u / (n·σ²X·R²<sub>X,Z</sub>)'},
+               {t:str<0.25?'a <b>weak</b> instrument makes the scatter explode':'a strong instrument keeps the cost modest',k:str<0.25?'bad':'good'},
+               {t:'the Hausman test asks whether the difference β̂<sup>IV</sup> − β̂<sup>OLS</sup> is bigger than chance'}]);
+      }
+    }
+    var TXT={
+      endog:['The endogeneity problem',
+        'If the regressor is correlated with the error, E(u|X) ≠ 0 and OLS estimates β₁ + Cov(X,u)/Var(X) instead of β₁. Collecting more data does not help: the estimator converges, precisely, on the wrong number.',''],
+      valid:['What makes an instrument valid',
+        'An instrument Z must satisfy two conditions. <b>Relevance</b>: it genuinely moves X. <b>Exogeneity</b>: it influences Y only through X, with no direct path and no link to the error.',''],
+      tsls:['Two-stage least squares',
+        'Stage 1 regresses X on Z and keeps the fitted values X̂ — the portion of X driven purely by the instrument, and therefore uncorrelated with u. Stage 2 regresses Y on X̂. Both stages are ordinary OLS.',''],
+      weak:['The price: precision, and weak instruments',
+        'IV buys consistency with variance. Because it throws away all variation in X that the instrument does not explain, its sampling distribution is always wider than the OLS one — dramatically so when the instrument is weak.','']
+    };
+    var NOTE={
+      endog:'Fixed effects can absorb an omitted factor that is fixed within an entity or within a period. When the confounder varies across both, instrumental variables are the remaining option.',
+      valid:'Relevance can be checked in the data. Exogeneity cannot — it has to be defended with an argument about how the world works.',
+      tsls:'Reported standard errors must come from a proper 2SLS routine, not from running the two OLS stages by hand, which would ignore that X̂ is itself estimated.',
+      weak:'Unbiased but noisy is not automatically better than precise but biased — the Hausman test is what tells you whether the trade is worth making.'
+    };
+    function setMode(){
+      mode=scnSel.value;
+      showIf('iv-e-grp',mode!=='valid');
+      showIf('iv-s-grp',mode!=='endog');
+      var t=TXT[mode];setTxt('iv-title',t[0]);setHTML('iv-desc',t[1]);
+      setHTML('iv-extra',t[2]?'<div class="hint" style="margin-top:8px">'+t[2]+'</div>':'');
+      setTxt('iv-note',NOTE[mode]);
+      render();
+    }
+    scnSel.addEventListener('change',setMode);
+    [eEl,sEl].forEach(function(e){e.addEventListener('input',render);});
+    eEl.value=0.5;sEl.value=0.7;
+    setMode();
+  })();
 })();
 </script>
 
@@ -1082,12 +3007,12 @@
 (function(){
   var $=function(id){return document.getElementById(id);};
   var storeKey='eco372InteractiveProgress';
-  var progress={ols:false,r2:false,ht:false,props:false};
+  var progress={props:false,ols:false,r2:false,ht:false,nl:false,panel:false,bin:false,iv:false};
   try{progress=Object.assign(progress,JSON.parse(localStorage.getItem(storeKey)||'{}'));}catch(e){}
 
   function save(){try{localStorage.setItem(storeKey,JSON.stringify(progress));}catch(e){}}
   function updateProgress(){
-    var keys=['props','ols','r2','ht'];
+    var keys=['props','ols','r2','ht','nl','panel','bin','iv'];
     var done=keys.filter(function(k){return progress[k];}).length;
     var pct=Math.round(done/keys.length*100);
     if($('progress-label')) $('progress-label').textContent=done+'/'+keys.length;
@@ -1106,7 +3031,7 @@
 
   document.addEventListener('keydown',function(e){
     if(e.target && /input|select|textarea|button/i.test(e.target.tagName)) return;
-    var order=['props','ols','r2','ht'];
+    var order=['props','ols','r2','ht','nl','panel','bin','iv'];
     var picker=$('section-picker');
     if(!picker) return;
     var active=order.indexOf(picker.value);
